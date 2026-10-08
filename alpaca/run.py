@@ -124,8 +124,8 @@ def main():
             if a.publish_every:
                 publish(f"paper {today} {datetime.now(ET).strftime('%H:%M')} ET (job end)")
             return
-        # wake 5 seconds after the next minute boundary (bars for the finished minute are published by then)
-        nxt = (datetime.now(timezone.utc) + timedelta(minutes=1)).replace(second=5, microsecond=0)
+        # wake 2 seconds after the next minute boundary (Alpaca publishes the finished minute's bar within ~1s)
+        nxt = (datetime.now(timezone.utc) + timedelta(minutes=1)).replace(second=2, microsecond=0)
         if not c["is_open"]:
             nxt = max(nxt, datetime.fromisoformat(c["next_open"]).astimezone(timezone.utc) - timedelta(minutes=20))
         time.sleep(max(1.0, (nxt - datetime.now(timezone.utc)).total_seconds()))

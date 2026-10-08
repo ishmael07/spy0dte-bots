@@ -149,6 +149,7 @@ def main():
     open("web/paper_artifact.html", "w").write(page)
     head = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
+            + ('<meta http-equiv="refresh" content="60">' if market_open else '') +
             '<style>body{margin:0}</style></head><body>\n')
     open("web/paper.html", "w").write(head + page + "\n</body></html>")
     print("phases", phases, {p: phase_days[p] for p in phases}, f"page {len(page) / 1e6:.2f} MB")
