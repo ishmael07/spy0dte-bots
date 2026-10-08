@@ -1,0 +1,518 @@
+<title>SPY 0DTE Sniper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column of instrument panels — leaderboard + stats, equity, session chart, fills */
+:root {
+  --bg: #f5f6f8; --panel: #ffffff; --line: #e3e6eb; --grid: #eef0f3;
+  --fg: #12151a; --muted: #6b7380; --faint: #9aa1ab;
+  --up: #16915f; --down: #d0413f; --up-bg: rgba(22,145,95,.12); --down-bg: rgba(208,65,63,.12);
+  --s1: #2a78d6; --s2: #eb6834; --s3: #4a3aa7; --s4: #eda100;
+  --orbh: #c99700; --orbl: #e0782b; --vwap: #8a5cd6; --ema-f: #16915f; --ema-s: #d0413f;
+  --focus: #2a78d6;
+  --f-ui: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-num: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0e11; --panel: #13161b; --line: #232830; --grid: #1a1e24;
+  --fg: #e6e9ee; --muted: #8b93a0; --faint: #5d6570;
+  --up: #3cc28a; --down: #f0605e; --up-bg: rgba(60,194,138,.14); --down-bg: rgba(240,96,94,.14);
+  --s1: #3987e5; --s2: #d95926; --s3: #9085e9; --s4: #c98500;
+  --orbh: #e3b52c; --orbl: #e88a45; --vwap: #a985f0; --ema-f: #3cc28a; --ema-s: #f0605e;
+  --focus: #3987e5; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #0c0e11; --panel: #13161b; --line: #232830; --grid: #1a1e24;
+  --fg: #e6e9ee; --muted: #8b93a0; --faint: #5d6570;
+  --up: #3cc28a; --down: #f0605e; --up-bg: rgba(60,194,138,.14); --down-bg: rgba(240,96,94,.14);
+  --s1: #3987e5; --s2: #d95926; --s3: #9085e9; --s4: #c98500;
+  --orbh: #e3b52c; --orbl: #e88a45; --vwap: #a985f0; --ema-f: #3cc28a; --ema-s: #f0605e;
+  --focus: #3987e5; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 14px; }
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 48px; display: grid; gap: 16px; }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+.pos { color: var(--up); } .neg { color: var(--down); } .mut { color: var(--muted); }
+
+header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.brand h1 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
+.brand .num { color: var(--muted); font-size: 12px; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; }
+.seg { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 2px; }
+.seg button { font: 500 13px var(--f-ui); color: var(--muted); background: none; border: 0; padding: 6px 11px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.seg button:hover { color: var(--fg); }
+.seg button[aria-pressed="true"] { background: var(--bg); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
+button:focus-visible, .cell:focus-visible, tr:focus-visible, .dcell:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.sw { width: 8px; height: 8px; border-radius: 2px; display: inline-block; flex: none; }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.ph { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px 0; }
+.ph h2 { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0; }
+
+.top { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 900px) { .top { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.matrix-scroll { overflow-x: auto; padding: 10px 14px 14px; }
+.matrix { display: grid; grid-template-columns: minmax(130px, auto) repeat(5, minmax(78px, 1fr)); gap: 4px; min-width: 560px; }
+.mh { font-size: 12px; color: var(--muted); padding: 4px 6px; text-align: center; }
+.mh.row { text-align: left; display: flex; align-items: center; gap: 8px; color: var(--fg); font-weight: 500; font-size: 13px; }
+.cell { border-radius: 6px; padding: 8px 6px; text-align: center; cursor: pointer; border: 1px solid transparent; display: grid; gap: 2px; background: var(--grid); }
+.cell:hover { border-color: var(--line); }
+.cell.sel { border-color: var(--fg); }
+.cell .r { font: 500 14px var(--f-num); }
+.cell .b { font: 400 11px var(--f-num); color: var(--muted); }
+.cell .best { font: 600 9px var(--f-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+.kpi { background: var(--panel); padding: 12px 14px; display: grid; gap: 4px; align-content: start; }
+.kpi .k { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.kpi .v { font: 500 20px var(--f-num); letter-spacing: -.01em; }
+.kpi .s { font: 400 12px var(--f-num); color: var(--muted); }
+.kpi.hero .v { font-size: 26px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.legend b { font: 500 12px var(--f-num); color: var(--fg); }
+.legend .on { color: var(--fg); }
+#eq { height: 220px; margin: 6px 4px 8px; }
+
+.daynav { display: flex; align-items: center; gap: 6px; }
+.daynav button, .tog { font: 500 13px var(--f-ui); background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 9px; cursor: pointer; }
+.daynav button:disabled { opacity: .35; cursor: default; }
+.daynav .d { font: 500 14px var(--f-num); min-width: 108px; text-align: center; }
+.chip { font: 500 12px var(--f-num); padding: 3px 8px; border-radius: 999px; background: var(--grid); color: var(--muted); }
+.chip.pos { background: var(--up-bg); color: var(--up); } .chip.neg { background: var(--down-bg); color: var(--down); }
+.togs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tog { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 9px; }
+.tog[aria-pressed="true"] { color: var(--fg); border-color: var(--faint); }
+.days { display: grid; grid-template-columns: repeat(22, minmax(0, 1fr)); gap: 3px; padding: 10px 14px 0; }
+.dcell { height: 22px; border-radius: 3px; background: var(--grid); cursor: pointer; border: 1px solid transparent; position: relative; }
+.dcell.sel { border-color: var(--fg); }
+.dcell:hover::after { content: attr(data-tip); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); white-space: nowrap; font: 500 11px var(--f-num); background: var(--fg); color: var(--bg); padding: 3px 6px; border-radius: 4px; z-index: 5; pointer-events: none; }
+.pxwrap { position: relative; margin: 8px 4px 6px; }
+#px { height: 520px; }
+@media (max-width: 640px) { #px { height: 420px; } .days { grid-template-columns: repeat(11, minmax(0, 1fr)); } }
+.hud { position: absolute; top: 6px; left: 10px; z-index: 3; font: 400 12px var(--f-num); color: var(--muted); pointer-events: none; display: flex; gap: 12px; flex-wrap: wrap; }
+.hud b { color: var(--fg); font-weight: 500; }
+
+.tbl { overflow-x: auto; padding: 6px 0 4px; }
+table { border-collapse: collapse; width: 100%; min-width: 860px; }
+th { font: 500 11px var(--f-ui); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); text-align: right; padding: 8px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { font: 400 13px var(--f-num); font-variant-numeric: tabular-nums; text-align: right; padding: 8px 12px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+tbody tr { cursor: pointer; }
+tbody tr:hover td { background: var(--grid); }
+tbody tr.hl td { background: var(--grid); }
+tbody tr.hl td:first-child { box-shadow: inset 2px 0 0 var(--fg); }
+.side { display: inline-block; font: 600 10px var(--f-ui); letter-spacing: .06em; padding: 2px 5px; border-radius: 4px; margin-right: 6px; vertical-align: 1px; }
+.side.C { background: var(--up-bg); color: var(--up); } .side.P { background: var(--down-bg); color: var(--down); }
+.why { font: 400 12px var(--f-ui); color: var(--muted); }
+.foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font: 400 11px var(--f-num); color: var(--faint); padding-inline: 2px; }
+@media (prefers-reduced-motion: no-preference) { .cell, .dcell, .seg button { transition: background .12s, border-color .12s, color .12s; } }
+
+.kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 760px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+#eq { height: 200px; }
+.tradeview { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 0; }
+@media (max-width: 900px) { .tradeview { grid-template-columns: 1fr; } }
+#px { height: 460px; }
+#band { position: absolute; top: 0; bottom: 28px; pointer-events: none; z-index: 2; }
+#opt { height: 150px; border-top: 1px solid var(--line); }
+.card { border-left: 1px solid var(--line); padding: 14px 16px; display: grid; gap: 12px; align-content: start; }
+@media (max-width: 900px) { .card { border-left: 0; border-top: 1px solid var(--line); } }
+.card .big { font: 500 28px var(--f-num); letter-spacing: -.01em; }
+.card .contract { font: 600 15px var(--f-ui); display: flex; align-items: center; gap: 8px; }
+.rows { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 13px; }
+.rows dt { color: var(--muted); }
+.rows dd { margin: 0; text-align: right; font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+.leg { display: grid; grid-template-columns: 52px 1fr auto; gap: 4px 10px; align-items: baseline; padding: 10px 12px; background: var(--grid); border-radius: 8px; }
+.leg .lbl { font: 600 10px var(--f-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.leg .tm { font: 500 16px var(--f-num); }
+.leg .px { font: 500 14px var(--f-num); text-align: right; }
+.leg .sub { grid-column: 2 / 4; font: 400 11px var(--f-num); color: var(--muted); }
+.checks { display: flex; flex-wrap: wrap; gap: 6px; }
+.chk { font: 500 11px var(--f-num); padding: 3px 7px; border-radius: 999px; background: var(--up-bg); color: var(--up); }
+.nav { display: flex; align-items: center; gap: 8px; }
+.nav button { font: 500 13px var(--f-ui); background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+.nav button:disabled { opacity: .35; cursor: default; }
+.nav .n { font: 500 13px var(--f-num); color: var(--muted); }
+.cmp td:first-child, .cmp th:first-child { text-align: left; }
+.cmp { min-width: 520px; }
+tr.pick td { font-weight: 600; }
+
+/* paper leaderboard */
+:root { --gold: #b8860b; --silver: #7d8794; --bronze: #a8592c; --gold-bg: rgba(184,134,11,.12); --silver-bg: rgba(125,135,148,.12); --bronze-bg: rgba(168,89,44,.12); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --gold: #e5b443; --silver: #b4bcc7; --bronze: #d98a5b; --gold-bg: rgba(229,180,67,.14); --silver-bg: rgba(180,188,199,.12); --bronze-bg: rgba(217,138,91,.14); } }
+:root[data-theme="dark"] { --gold: #e5b443; --silver: #b4bcc7; --bronze: #d98a5b; --gold-bg: rgba(229,180,67,.14); --silver-bg: rgba(180,188,199,.12); --bronze-bg: rgba(217,138,91,.14); }
+.board { display: grid; gap: 0; }
+.board .ph { padding-bottom: 4px; }
+.live { display: inline-flex; align-items: center; gap: 7px; font: 500 12px var(--f-num); color: var(--muted); }
+.live i { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+.live.on i { background: var(--up); box-shadow: 0 0 0 0 var(--up); animation: pulse 1.8s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(60,194,138,.45); } 70% { box-shadow: 0 0 0 7px rgba(60,194,138,0); } 100% { box-shadow: 0 0 0 0 rgba(60,194,138,0); } }
+@media (prefers-reduced-motion: reduce) { .live.on i { animation: none; } }
+.podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 12px 14px 4px; }
+@media (max-width: 720px) { .podium { grid-template-columns: 1fr; } }
+.pcard { border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 10px; cursor: pointer; background: var(--panel); text-align: left; font: inherit; color: inherit; }
+.pcard:hover { border-color: var(--faint); }
+.pcard.sel { border-color: var(--fg); }
+.pcard .top { display: flex; align-items: center; gap: 10px; }
+.medal { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font: 600 14px var(--f-num); flex: none; }
+.m1 { background: var(--gold-bg); color: var(--gold); box-shadow: inset 0 0 0 1.5px var(--gold); }
+.m2 { background: var(--silver-bg); color: var(--silver); box-shadow: inset 0 0 0 1.5px var(--silver); }
+.m3 { background: var(--bronze-bg); color: var(--bronze); box-shadow: inset 0 0 0 1.5px var(--bronze); }
+.mN { background: var(--grid); color: var(--muted); }
+.pcard .nm { font: 600 15px var(--f-ui); }
+.pcard .ret { margin-left: auto; font: 600 18px var(--f-num); }
+.pcard .bal { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pcard .bal div { background: var(--grid); border-radius: 7px; padding: 8px 10px; display: grid; gap: 2px; }
+.pcard .bal span { font: 400 11px var(--f-num); color: var(--muted); }
+.pcard .bal b { font: 500 16px var(--f-num); }
+.pcard .meta { display: flex; flex-wrap: wrap; gap: 6px 12px; font: 400 12px var(--f-num); color: var(--muted); }
+.pcard .meta b { color: var(--fg); font-weight: 500; }
+.ranks td { padding: 9px 12px; }
+.ranks td.rk { width: 44px; }
+.ranks .medal { width: 24px; height: 24px; font-size: 12px; }
+.ranks td.bot { font: 500 13.5px var(--f-ui); text-align: left; }
+.ranks th:nth-child(2) { text-align: left; }
+.ranks tr.sel td { background: var(--grid); }
+.opentag { font: 600 9px var(--f-ui); letter-spacing: .08em; text-transform: uppercase; padding: 2px 5px; border-radius: 4px; background: var(--up-bg); color: var(--up); margin-left: 6px; }
+.empty { padding: 18px 14px 6px; color: var(--muted); font-size: 13px; }
+[hidden] { display: none !important; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand"><h1>SPY 0DTE Sniper</h1><span class="num" id="range"></span></div>
+    <div class="controls">
+      <div class="seg" id="segStrat" role="group" aria-label="Strategy"></div>
+      <div class="seg" id="segPeriod" role="group" aria-label="Start date"></div>
+      <div class="seg" id="segCap" role="group" aria-label="Starting capital"></div>
+      <div class="seg" id="segSize" role="group" aria-label="Position size"></div>
+    </div>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="panel">
+    <div class="ph"><h2>Account</h2><div class="legend" id="eqLegend"></div></div>
+    <div id="eq"></div>
+  </section>
+
+  <section class="panel">
+    <div class="ph">
+      <div class="nav">
+        <button id="prevT" aria-label="Previous trade">‹</button>
+        <span class="d num" id="tDay"></span>
+        <button id="nextT" aria-label="Next trade">›</button>
+        <span class="n" id="tIdx"></span>
+      </div>
+      <div class="legend"><span><i class="sw" style="background:var(--up)"></i>Supertrend</span><span><i class="sw" style="background:var(--vwap)"></i>VWAP</span></div>
+    </div>
+    <div class="tradeview">
+      <div style="min-width:0">
+        <div class="pxwrap" style="margin:8px 4px 0"><div class="hud" id="hud"></div><div id="band" hidden></div><div id="px"></div></div>
+        <div id="opt"></div>
+      </div>
+      <aside class="card" id="card"></aside>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="ph"><h2>Trades</h2><span class="chip" id="tradeCount"></span></div>
+    <div class="tbl"><table>
+      <thead><tr><th>Date</th><th>Contract</th><th>Buy time</th><th>Sell time</th><th>Held</th><th>Qty</th><th>Buy</th><th>Sell</th><th>P&amp;L</th><th>%</th><th>Exit</th><th>Balance</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table></div>
+  </section>
+
+  <section class="panel">
+    <div class="ph"><h2>Never-seen days vs design days · $100 per trade</h2></div>
+    <div class="tbl"><table class="cmp"><thead><tr><th>Strategy</th><th id="hUnseen">Untouched</th><th>Win</th><th>Net</th><th id="hDesign">Designed on</th><th>Win</th><th>Net</th><th>Worst trade</th></tr></thead><tbody id="cmp"></tbody></table></div>
+  </section>
+
+  <section class="panel board" id="board" hidden>
+    <div class="ph"><h2 id="boardTitle">Leaderboard</h2><span class="live" id="live"><i></i><span></span></span></div>
+    <div class="podium" id="podium"></div>
+    <div class="tbl"><table class="ranks"><thead><tr><th>#</th><th>Bot</th><th>$100 acct</th><th>$500 acct</th><th>Return</th><th>Win rate</th><th>Trades</th><th>Best</th><th>Worst</th><th>Max DD</th><th id="todayHead">Today</th></tr></thead><tbody id="ranks"></tbody></table></div>
+  </section>
+
+  <div class="foot"><span id="footL"></span><span id="footR"></span></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.0.8/dist/lightweight-charts.standalone.production.js"></script>
+<script>window.__DATA__ = /*DATA*/null;</script>
+<script>
+(() => {
+const D = window.__DATA__;
+const LC = window.LightweightCharts;
+const $ = (id) => document.getElementById(id);
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const money = (v, d = 2) => (v < 0 ? "−$" : "$") + Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+const sgn = (v, d = 1) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(d);
+const sgnUsd = (v) => (v >= 0 ? "+" : "−") + money(Math.abs(v));
+const alpha = (hex, a) => { const h = hex.replace("#", ""); const n = parseInt(h.length === 3 ? h.split("").map((c) => c + c).join("") : h, 16); return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`; };
+const cls = (v) => (v > 0 ? "pos" : v < 0 ? "neg" : "mut");
+const hhmm = (ts) => new Date(ts * 1000).toISOString().slice(11, 16);
+const dayLong = (d) => new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+const dayShort = (d) => new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+const SZ = { all: "All-in", half: "50% per trade", quarter: "25% per trade" };
+const WHY = { OPEN: "Still open · marked to market", TARGET: "Target hit", "TIME LIMIT": "Time limit", STOP: "Stop hit", BREAKEVEN: "Breakeven stop", "NO FOLLOW-THROUGH": "No follow-through", "TREND FLIP": "5m trend flipped", "2H CAP": "2-hour limit", "3:45 EXIT": "3:45 close" };
+
+const store = (() => { try { return JSON.parse(localStorage.getItem("spy0dte-sniper2") || "{}"); } catch { return {}; } })();
+const state = {
+  period: D.periods.includes(store.period) ? store.period : 90,
+  rule: D.names[store.rule] ? store.rule : "combined",
+  cap: D.capitals.includes(store.cap) ? store.cap : 100,
+  size: D.sizing.includes(store.size) ? store.size : "half",
+  k: 0,
+};
+const save = () => { try { localStorage.setItem("spy0dte-sniper2", JSON.stringify({ rule: state.rule, period: state.period, cap: state.cap, size: state.size })); } catch {} };
+const fixPeriod = () => { const ps = D.periodsBy[state.rule]; if (!ps.includes(state.period)) state.period = ps.at(-1); };
+fixPeriod();
+const run = () => D.runs[`${state.rule}|${state.period}|${state.cap}|${state.size}`];
+const tf = () => D.tf[state.rule];
+const ttf = (t) => (t && t.tf) || tf();
+const chartOf = (day, t) => (ttf(t) === 1 ? D.chart1[day] : D.chart[day]);
+const startDay = () => (D.paper ? D.phaseDays[state.period][0] : tf() === 1 ? D.days1[0] : D.days[D.days.length - state.period]);
+const trades = () => run().trades.filter((t) => !t.skipped);
+
+const setRange = () => { $("range").textContent = D.paper ? `${D.periodLabels[state.period]} · ${D.phaseDays[state.period].length ? dayShort(D.phaseDays[state.period][0]) + " – " + dayShort(D.phaseDays[state.period].at(-1)) : "starts at the next open"} · paper money · no real orders` : `${dayShort(startDay())} – ${dayShort(D.days.at(-1))} · ${state.period} sessions · buys calls/puts only · ${state.rule === "sniper_ppp" ? "up to 2 trades/day" : state.rule === "sniper4" ? "1 trade/day · adds to winners" : state.rule === "sniped1" ? "1m scalps · up to 3/day · adds to winners" : state.rule === "combined" ? "Sniper4 runners + Sniped1 scalps · one account" : "1 trade/day max"}`; };
+
+function seg(el, items, cur, onPick) {
+  el.innerHTML = "";
+  for (const [k, label] of items) {
+    const b = document.createElement("button");
+    b.type = "button"; b.setAttribute("aria-pressed", k === cur); b.textContent = label;
+    b.onclick = () => onPick(k); el.append(b);
+  }
+}
+function renderControls() {
+  seg($("segStrat"), Object.entries(D.names), state.rule, (k) => { state.rule = k; state.k = 0; fixPeriod(); update(); });
+  seg($("segPeriod"), D.periodsBy[state.rule].map((p) => [p, D.periodLabels ? D.periodLabels[p] : tf() === 1 ? `${p} days · 1m data` : `${p} days`]), state.period, (k) => { state.period = k; state.k = 0; update(); });
+  seg($("segCap"), D.capitals.map((c) => [c, "$" + c]), state.cap, (k) => { state.cap = k; update(); });
+  seg($("segSize"), D.sizing.map((z) => [z, SZ[z]]), state.size, (k) => { state.size = k; update(); });
+}
+
+function renderKpis() {
+  const s = run().stats;
+  const tiles = [
+    ["Balance", money(s.final), `from ${money(s.start, 0)}`, "hero", cls(s.final - s.start)],
+    ["Return", sgn(s.ret, 0) + "%", state.rule === "combined" ? `Sniper4 ${({ all: "100", half: "50", quarter: "25" })[state.size]}% · Sniped1 ${({ all: "50", half: "25", quarter: "10" })[state.size]}%` : `${D.names[state.rule]} · ${SZ[state.size]}`, "", cls(s.ret)],
+    ["Win rate", s.winRate.toFixed(0) + "%", `${s.wins}W · ${s.trades - s.wins}L${s.skipped ? ` · ${s.skipped} unaffordable` : ""}`, "", ""],
+    ["Avg win / loss", `${sgn(s.avgWin, 0)}% / ${sgn(s.avgLoss, 0)}%`, `best ${sgn(s.best, 0)}% · worst ${sgn(s.worst, 0)}%`, "", ""],
+    ["Max drawdown", "−" + s.mdd.toFixed(0) + "%", "peak to trough", "", "neg"],
+    D.paper ? ["Fill prices", `${s.realDays} real · ${s.modelDays} modeled`, "days priced from real option bars", "", ""] :
+    ["Any 5-day week", `2× ${s.week.x2.toFixed(0)}% · 10× ${s.week.x10.toFixed(1)}%`, `odds at this bet size · up ${s.week.up.toFixed(0)}% of weeks`, "", ""],
+    ["Trades per week", s.perWeek.toFixed(1), `${s.trades} in ${D.paper ? s.sessions : state.period} sessions`, "", ""],
+    D.paper ? ["Days with a trade", `${s.tradeDays} of ${s.sessions}`, "sits out when there's no setup", "", ""] :
+    ["Typical · bad case", s.odds ? `${money(s.odds[1], 0)} · ${money(s.odds[0], 0)}` : "—", "median · 10th pct of resampled runs", "", ""],
+  ];
+  $("kpis").innerHTML = tiles.map(([k, v, sub, h, c]) => `<div class="kpi ${h}"><span class="k">${k}</span><span class="v ${c}">${v}</span><span class="s">${sub}</span></div>`).join("");
+}
+
+function baseOpts(extra) {
+  return Object.assign({
+    autoSize: true,
+    layout: { background: { type: "solid", color: css("--panel") }, textColor: css("--muted"), fontFamily: css("--f-num"), fontSize: 11, attributionLogo: false },
+    grid: { vertLines: { color: css("--grid") }, horzLines: { color: css("--grid") } },
+    rightPriceScale: { borderColor: css("--line") },
+    timeScale: { borderColor: css("--line") },
+    crosshair: { mode: 0, vertLine: { color: css("--faint"), labelBackgroundColor: css("--fg") }, horzLine: { color: css("--faint"), labelBackgroundColor: css("--fg") } },
+  }, extra);
+}
+
+let band, eqChart, eqLine, eqMarks, px, cand, stUp, stDn, vwap, tradeLine, pxMarks, priceLines = [], opt, optLine, optLines = [];
+
+function buildCharts() {
+  $("eq").innerHTML = ""; $("px").innerHTML = ""; $("opt").innerHTML = "";
+  eqChart = LC.createChart($("eq"), baseOpts({ handleScroll: false, handleScale: false, timeScale: { borderColor: css("--line"), fixLeftEdge: true, fixRightEdge: true } }));
+  eqLine = eqChart.addSeries(LC.BaselineSeries, { baseValue: { type: "price", price: 100 }, lineWidth: 2,
+    topLineColor: css("--up"), topFillColor1: "transparent", topFillColor2: "transparent", bottomLineColor: css("--down"), bottomFillColor1: "transparent", bottomFillColor2: "transparent",
+    priceLineVisible: false, lastValueVisible: true, priceFormat: { type: "custom", formatter: (v) => money(v, 0) } });
+  eqMarks = LC.createSeriesMarkers(eqLine, []);
+  eqChart.subscribeClick((p) => { if (!p || !p.time) return; const k = trades().findIndex((t) => t.day === p.time); if (k >= 0) { state.k = k; renderTrade(); renderTable(); } });
+
+  px = LC.createChart($("px"), baseOpts({ timeScale: { borderColor: css("--line"), timeVisible: true, secondsVisible: false } }));
+  cand = px.addSeries(LC.CandlestickSeries, { upColor: css("--up"), downColor: css("--down"), borderVisible: false, wickUpColor: css("--up"), wickDownColor: css("--down"), priceLineVisible: false, lastValueVisible: false });
+  const line = (color, extra) => px.addSeries(LC.LineSeries, Object.assign({ color, lineWidth: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false }, extra));
+  stUp = line(css("--up")); stDn = line(css("--down")); vwap = line(css("--vwap"), { lineStyle: 1 });
+  tradeLine = line(css("--fg"), { lineWidth: 2, lineStyle: 2 });
+  pxMarks = LC.createSeriesMarkers(cand, []);
+  px.subscribeCrosshairMove(renderHud);
+  px.timeScale().subscribeVisibleLogicalRangeChange(placeBand);
+  px.timeScale().subscribeSizeChange(placeBand);
+
+  opt = LC.createChart($("opt"), baseOpts({ timeScale: { borderColor: css("--line"), timeVisible: true, secondsVisible: false } }));
+  optLine = opt.addSeries(LC.AreaSeries, { lineColor: css("--fg"), topColor: "transparent", bottomColor: "transparent", lineWidth: 2, priceLineVisible: false, lastValueVisible: false,
+    priceFormat: { type: "price", precision: 2, minMove: 0.01 } });
+}
+
+function renderEquity() {
+  const ts = trades();
+  const s = run().stats;
+  eqLine.applyOptions({ baseValue: { type: "price", price: s.start } });
+  const byDay = new Map();   // one point per day (Sniper+++ can trade twice a day)
+  ts.forEach((t, k) => { const p = byDay.get(t.day) || { pnl: 0, sel: false }; byDay.set(t.day, { eq: t.eq, pnl: p.pnl + t.pnl, sel: p.sel || k === state.k }); });
+  const pts = [{ time: prevDay(ts[0]?.day || D.days[0]), value: s.start }, ...[...byDay].map(([d, v]) => ({ time: d, value: v.eq }))];
+  eqLine.setData(pts);
+  eqMarks.setMarkers([...byDay].map(([d, v]) => ({ time: d, position: "inBar", shape: "circle", color: v.sel ? css("--fg") : (v.pnl > 0 ? css("--up") : css("--down")), size: v.sel ? 1.4 : 0.6 })));
+  eqChart.timeScale().fitContent();
+  $("eqLegend").innerHTML = `<span>${money(s.start, 0)} → <b>${money(s.final)}</b></span><span class="${cls(s.ret)}">${sgn(s.ret, 0)}%</span>`;
+}
+function prevDay(d) { const t = new Date(d + "T12:00:00Z"); do { t.setUTCDate(t.getUTCDate() - 1); } while ([0, 6].includes(t.getUTCDay())); return t.toISOString().slice(0, 10); }
+
+function renderTrade() {
+  const ts = trades();
+  if (!ts.length) { $("card").innerHTML = '<div class="mut">No trades in this window.</div>'; return; }
+  state.k = Math.min(state.k, ts.length - 1);
+  const t = ts[state.k];
+  const r = chartOf(t.day, t);
+  const ser = (a) => r.t.map((x, i) => (a[i] == null ? { time: x } : { time: x, value: a[i] }));
+  cand.setData(r.t.map((x, i) => ({ time: x, open: r.o[i], high: r.h[i], low: r.l[i], close: r.c[i] })));
+  stUp.setData(ser(r.stUp)); stDn.setData(ser(r.stDn)); vwap.setData(ser(r.vwap));
+  const call = t.side === "C";
+  const win = t.pnl > 0;
+  const step = ttf(t) * 60;
+  const bar = (x) => r.t[0] + Math.floor((x - r.t[0]) / step) * step;
+  tradeLine.applyOptions({ color: win ? css("--up") : css("--down") });
+  const tA = bar(t.tIn), tB = Math.max(bar(t.tOut - step), tA);
+  tradeLine.setData(tB > tA ? [{ time: tA, value: t.spyIn }, { time: tB, value: t.spyOut }] : []);
+  pxMarks.setMarkers([
+    { time: bar(t.tIn), position: call ? "belowBar" : "aboveBar", shape: call ? "arrowUp" : "arrowDown", color: call ? css("--up") : css("--down"), text: `BUY ${hhmm(t.tIn)}`, size: 1.6 },
+    { time: bar(t.tOut - step), position: call ? "aboveBar" : "belowBar", shape: "circle", color: win ? css("--up") : css("--down"), text: `SELL ${hhmm(t.tOut)} ${sgn(t.pct, 0)}%`, size: 1.4 },
+  ]);
+  for (const p of priceLines) cand.removePriceLine(p);
+  priceLines = [cand.createPriceLine({ price: t.stopLvl, color: css("--down"), lineWidth: 1, lineStyle: 1, axisLabelVisible: true, title: "stop" })];
+  const tint = (win ? css("--up") : css("--down"));
+  band = { from: bar(t.tIn), to: Math.max(bar(t.tOut - step), bar(t.tIn)), color: alpha(tint, 0.08) };
+  const pad = ttf(t) === 1 ? 20 * 60 : 45 * 60;
+  const from = Math.max(r.t[0], bar(t.tIn) - pad), to = Math.min(r.t.at(-1), bar(t.tOut - step) + pad);
+
+  optLine.applyOptions({ lineColor: win ? css("--up") : css("--down") });
+  const pathMap = new Map(t.path.map(([time, value]) => [bar(time), value]));
+  optLine.setData(r.t.map((x) => (pathMap.has(x) ? { time: x, value: pathMap.get(x) } : { time: x })));
+  for (const p of optLines) optLine.removePriceLine(p);
+  optLines = [optLine.createPriceLine({ price: t.optIn, color: css("--muted"), lineStyle: 2, lineWidth: 1, axisLabelVisible: true, title: "buy" }),
+              optLine.createPriceLine({ price: t.optOut, color: win ? css("--up") : css("--down"), lineStyle: 2, lineWidth: 1, axisLabelVisible: true, title: "sell" })];
+  requestAnimationFrame(() => { px.timeScale().setVisibleRange({ from, to }); opt.timeScale().setVisibleRange({ from, to }); setTimeout(placeBand, 60); });
+
+  $("tDay").textContent = dayLong(t.day);
+  $("tIdx").textContent = `trade ${state.k + 1} of ${ts.length}`;
+  $("prevT").disabled = state.k === 0; $("nextT").disabled = state.k === ts.length - 1;
+  const held = Math.round((t.tOut - t.tIn) / 60);
+  $("card").innerHTML = `
+    <div class="contract"><span class="side ${t.side}">${call ? "CALL" : "PUT"}</span>SPY ${t.strike}${t.side} · 0DTE · ×${t.qty}</div>
+    <div><div class="big ${cls(t.pnl)}">${sgnUsd(t.pnl)}</div><div class="${cls(t.pnl)} num">${sgn(t.pct, 1)}% on ${money(t.cost)}</div></div>
+    <div class="leg"><span class="lbl">Buy</span><span class="tm">${hhmm(t.tIn)}</span><span class="px">$${t.optIn.toFixed(2)}</span><span class="sub">SPY ${t.spyIn.toFixed(2)}</span></div>
+    <div class="leg"><span class="lbl">Sell</span><span class="tm">${hhmm(t.tOut)}</span><span class="px">$${t.optOut.toFixed(2)}</span><span class="sub">SPY ${t.spyOut.toFixed(2)} · ${WHY[t.reason] || t.reason}</span></div>
+    <dl class="rows"><dt>Held</dt><dd>${held} min</dd><dt>Stop (SPY)</dt><dd>${t.stopLvl.toFixed(2)}</dd><dt>Volume</dt><dd>${t.vol.toFixed(2)}× avg</dd>${t.half ? "<dt>Half sold</dt><dd>at +1.5 ATR</dd>" : ""}${t.addQty ? `<dt>Added</dt><dd>×${t.addQty} @ $${t.addPx.toFixed(2)}</dd>` : ""}<dt>Balance after</dt><dd>${money(t.eq)}</dd></dl>
+    <div class="checks">${D.paper ? `<span class="chk" style="${t.fills === "real" ? "" : "background:var(--grid);color:var(--muted)"}">${t.fills === "real" ? "real option prices" : "modeled prices"}</span>` : ""}${t.kind ? `<span class="chk">${({ runner: "runner · Sniper+ setup", ride: "ride · Sniper+ setup", scalp: "scalp · Sniper setup", pullback1m: "1m pullback · 5m/15m/1h/50-day ✓" })[t.kind]}</span>` : ""}${["sniper_ppp", "sniper4", "sniped1", "combined"].includes(state.rule) ? "" : state.rule === "daily" ? `<span class="chk">quality ${t.score}/10</span>` : '<span class="chk">5m ✓</span><span class="chk">15m ✓</span><span class="chk">1h ✓</span><span class="chk">vol ✓</span>' + (state.rule !== "sniper" ? '<span class="chk">50-day ✓</span>' : "") + (state.rule.endsWith("scalp") ? '<span class="chk">scalp</span>' : "")}</div>`;
+  renderHud(null);
+  renderEquity();
+}
+
+function placeBand() {   // shaded holding period, drawn as an overlay that follows the time axis
+  const el = $("band");
+  if (!band) { el.hidden = true; return; }
+  const ts = px.timeScale();
+  const a = ts.timeToCoordinate(band.from), b = ts.timeToCoordinate(band.to);
+  if (a == null || b == null) { el.hidden = true; return; }
+  const half = Math.max(2, ts.options().barSpacing / 2);
+  el.hidden = false;
+  el.style.left = `${a - half}px`;
+  el.style.width = `${b - a + 2 * half}px`;
+  el.style.background = band.color;
+}
+
+function renderHud(p) {
+  const t = trades()[state.k]; if (!t) return;
+  const r = chartOf(t.day, t);
+  let i = r.t.length - 1;
+  if (p && p.time) { const k = r.t.indexOf(p.time); if (k >= 0) i = k; }
+  $("hud").innerHTML = `<span>SPY ${ttf(t)}m${t.bot ? " · " + t.bot : ""}</span><span>${hhmm(r.t[i])}</span><span>O <b>${r.o[i].toFixed(2)}</b></span><span>H <b>${r.h[i].toFixed(2)}</b></span><span>L <b>${r.l[i].toFixed(2)}</b></span><span>C <b>${r.c[i].toFixed(2)}</b></span>` +
+    (r.vwap[i] != null ? `<span>VWAP <b>${r.vwap[i].toFixed(2)}</b></span>` : "");
+}
+
+function renderTable() {
+  const all = run().trades;
+  const ts = trades();
+  $("tradeCount").textContent = `${ts.length} trades · ${D.names[state.rule]} · ${money(state.cap, 0)} · ${SZ[state.size]}`;
+  $("tbody").innerHTML = "";
+  ts.forEach((t, k) => {
+    const tr = document.createElement("tr");
+    tr.tabIndex = 0;
+    if (k === state.k) tr.classList.add("hl");
+    tr.innerHTML = `<td>${dayShort(t.day)}</td><td><span class="side ${t.side}">${t.side === "C" ? "CALL" : "PUT"}</span>SPY ${t.strike}${t.side}${t.bot ? ` <span class="tag">${t.bot}</span>` : ""}</td><td>${hhmm(t.tIn)}</td><td>${hhmm(t.tOut)}</td><td>${Math.round((t.tOut - t.tIn) / 60)}m</td><td>${t.qty}</td><td>${t.optIn.toFixed(2)}</td><td>${t.optOut.toFixed(2)}</td><td class="${cls(t.pnl)}">${sgnUsd(t.pnl)}</td><td class="${cls(t.pnl)}">${sgn(t.pct, 0)}%</td><td class="why">${WHY[t.reason] || t.reason}</td><td>${money(t.eq)}</td>`;
+    const go = () => { state.k = k; renderTrade(); renderTable(); $("px").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" }); };
+    tr.onclick = go; tr.onkeydown = (e) => { if (e.key === "Enter") go(); };
+    $("tbody").append(tr);
+  });
+}
+
+function renderCmp() {
+  if (D.paper) {
+    document.querySelector("#cmp").closest("section").querySelector("h2").textContent = "All bots this week";
+    $("hUnseen").textContent = D.tableHead[0]; $("hDesign").textContent = D.tableHead[1];
+    $("cmp").innerHTML = D.table.map((c) => `<tr class="${c.key === state.rule ? "pick" : ""}"><td>${c.name}</td><td>${c.a[0]} trades</td><td>${c.a[2]}%</td><td class="${cls(c.a[1])}">${sgnUsd(c.a[1])}</td><td>${c.b[0]} trades</td><td>${c.b[2]}%</td><td class="${cls(c.b[1])}">${sgnUsd(c.b[1])}</td><td class="${cls(c.worst)}">${sgnUsd(c.worst)}</td></tr>`).join("");
+    return;
+  }
+  const prev = D.days[D.days.indexOf(D.designStart) - 1];
+  $("hUnseen").textContent = `${dayShort(D.days[0])} – ${dayShort(prev)} · untouched`;
+  $("hDesign").textContent = `${dayShort(D.designStart)} – ${dayShort(D.days.at(-1))} · designed on`;
+  $("cmp").innerHTML = D.table.map((c) => `<tr class="${c.key === state.rule ? "pick" : ""}"><td>${c.name}</td>${["sniped1", "combined"].includes(c.key) ? '<td class="mut">no 1m data</td><td></td><td></td>' : `<td>${c.unseen[0]} trades</td><td>${c.unseen[2]}%</td><td class="${cls(c.unseen[1])}">${sgnUsd(c.unseen[1])}</td>`}<td>${c.design[0]} trades</td><td>${c.design[2]}%</td><td class="${cls(c.design[1])}">${sgnUsd(c.design[1])}</td><td class="neg">${sgnUsd(c.worst)}</td></tr>`).join("");
+}
+
+
+function renderBoard() {
+  if (!D.paper) return;
+  $("board").hidden = false;
+  $("segStrat").hidden = true;
+  document.querySelector("#cmp").closest("section").hidden = true;
+  const ph = state.period, z = state.size;
+  const live = $("live");
+  live.className = "live" + (D.marketOpen ? " on" : "");
+  live.querySelector("span").textContent = D.marketOpen ? `LIVE · updated ${D.updated} ET` : (D.updated ? `Market closed · last update ${D.updated} ET` : `Live paper starts ${D.liveStart} 9:30 ET`);
+  $("boardTitle").textContent = ph === "live" ? "Leaderboard · live paper" : "Leaderboard · replay";
+  $("todayHead").textContent = ph === "live" ? "Today" : "Last day";
+  const rows = Object.keys(D.names).map((k) => ({ k, s100: D.runs[`${k}|${ph}|100|${z}`].stats, s500: D.runs[`${k}|${ph}|500|${z}`].stats }));
+  const any = rows.some((r) => r.s100.trades);
+  rows.sort((a, b) => b.s100.ret - a.s100.ret || b.s500.ret - a.s500.ret || b.s100.trades - a.s100.trades);
+  const medal = (i) => `<span class="medal ${i < 3 ? "m" + (i + 1) : "mN"}">${i + 1}</span>`;
+  const usd = (v) => money(v, 2);
+  $("podium").innerHTML = any ? rows.slice(0, 3).map((r, i) => `
+    <button class="pcard ${r.k === state.rule ? "sel" : ""}" data-k="${r.k}" type="button">
+      <div class="top">${medal(i)}<span class="nm">${D.names[r.k]}</span><span class="ret ${cls(r.s100.ret)}">${sgn(r.s100.ret, 1)}%</span></div>
+      <div class="bal"><div><span>$100 account</span><b>${usd(r.s100.final)}</b></div><div><span>$500 account</span><b>${usd(r.s500.final)}</b></div></div>
+      <div class="meta"><span>Win <b>${r.s100.winRate.toFixed(0)}%</b></span><span>Trades <b>${r.s100.trades}</b></span><span>Best <b>${sgn(r.s100.best, 0)}%</b></span>${r.s100.open ? '<span class="opentag">Open</span>' : ""}</div>
+    </button>`).join("") : `<div class="empty">No trades yet. Bots start at the 9:30 ET open and the board updates every 5 minutes.</div>`;
+  $("ranks").innerHTML = rows.map((r, i) => `<tr tabindex="0" data-k="${r.k}" class="${r.k === state.rule ? "sel" : ""}">
+    <td class="rk">${medal(i)}</td><td class="bot">${D.names[r.k]}${r.s100.open ? '<span class="opentag">Open</span>' : ""}</td>
+    <td>${usd(r.s100.final)}</td><td>${usd(r.s500.final)}</td><td class="${cls(r.s100.ret)}">${sgn(r.s100.ret, 1)}%</td>
+    <td>${r.s100.trades ? r.s100.winRate.toFixed(0) + "%" : "—"}</td><td>${r.s100.trades}</td>
+    <td class="${cls(r.s100.bestUsd)}">${r.s100.trades ? sgnUsd(r.s100.bestUsd) : "—"}</td><td class="${cls(r.s100.worstUsd)}">${r.s100.trades ? sgnUsd(r.s100.worstUsd) : "—"}</td>
+    <td>${r.s100.trades ? "−" + r.s100.mdd.toFixed(0) + "%" : "—"}</td><td class="${cls(r.s100.todayPnl)}">${r.s100.trades ? sgnUsd(r.s100.todayPnl) : "—"}</td></tr>`).join("");
+  for (const el of document.querySelectorAll("#podium .pcard, #ranks tr")) {
+    const go = () => { state.rule = el.dataset.k; state.k = 0; fixPeriod(); update(); };
+    el.onclick = go;
+    el.onkeydown = (e) => { if (e.key === "Enter") go(); };
+  }
+}
+
+function update() { save(); setRange(); renderBoard(); renderControls(); renderKpis(); renderTrade(); renderTable(); renderCmp(); }
+
+$("prevT").onclick = () => { if (state.k > 0) { state.k--; renderTrade(); renderTable(); } };
+$("nextT").onclick = () => { if (state.k < trades().length - 1) { state.k++; renderTrade(); renderTable(); } };
+document.addEventListener("keydown", (e) => { if (e.key === "ArrowLeft") $("prevT").click(); if (e.key === "ArrowRight") $("nextT").click(); });
+$("footL").textContent = D.paper ? D.footer : `Real Robinhood SPY bars · real 0DTE daily OHLC per strike, intraday fills modeled (±${D.validation.mape}%) · strategies designed on ${dayShort(D.designStart)} onward · earlier days were never used to design them`;
+$("footR").textContent = "Fills +$0.02 slippage/side · $0.03/contract fees";
+
+function rebuild() { buildCharts(); renderCmp(); update(); }
+rebuild();
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", rebuild);
+new MutationObserver(rebuild).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+})();
+</script>

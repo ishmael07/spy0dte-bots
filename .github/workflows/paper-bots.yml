@@ -1,0 +1,34 @@
+name: paper-bots
+# Live paper trading for the SPY 0DTE bots on Alpaca data. Two jobs per weekday (GitHub caps a job at 6h):
+# the morning job starts before the open and runs ~5h40m; the afternoon job picks up and runs to the close.
+on:
+  schedule:
+    - cron: "50 12 * * 1-5"   # 8:50 ET (EDT) / 7:50 ET (EST) — waits for the 9:30 open
+    - cron: "40 18 * * 1-5"   # 2:40 pm ET (EDT) / 1:40 pm (EST) — runs until the close
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: paper-bots
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet numpy pandas requests
+      - name: Run bots
+        env:
+          ALPACA_KEY_ID: ${{ secrets.ALPACA_KEY_ID }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python alpaca/run.py --max-minutes 340 --publish-every 5

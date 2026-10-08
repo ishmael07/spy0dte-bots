@@ -1,0 +1,13 @@
+{
+ "oct7": {
+  "priceErr": 3.6,
+  "retErr": 1.8,
+  "points": 5777
+ },
+ "oct8": {
+  "priceErr": 3.6,
+  "retErr": 2.3,
+  "points": 1514
+ },
+ "mape": 3.6
+}

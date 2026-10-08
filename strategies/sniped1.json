@@ -1,0 +1,35 @@
+{
+ "saved": "2026-10-08",
+ "name": "Sniped1",
+ "data": "real 1m SPY bars Aug 27 \u2013 Oct 7 (29 sessions; Robinhood has no older 1m)",
+ "regime": "5m, 15m and 1h Supertrend agree + prior close on trade side of 50-day SMA (Sniper+ quality)",
+ "entry": "1m pullback: low touches EMA20/VWAP (+$0.02), candle closes back past EMA8 and VWAP in trend direction; 9:30\u201311:00; up to 3/day, non-overlapping",
+ "exit": {
+  "stop": "1.5 \u00d7 ATR(1m,14)",
+  "breakeven": "after +1.5 ATR",
+  "pyramid": "add same qty at +3 ATR (spare cash only)",
+  "target": "12 \u00d7 ATR",
+  "time_limit": "30 min"
+ },
+ "strike": "1 OTM",
+ "results_flat_100_unit": {
+  "trades": 20,
+  "per_week": 3.4,
+  "net": 665,
+  "avg_hold_min": 17,
+  "avg_loss": -17,
+  "blocks_10d": "all positive"
+ },
+ "compounding_29d": {
+  "100": {
+   "all_in": 691,
+   "half": 701
+  },
+  "500": {
+   "all_in": 5139,
+   "half": 3396
+  }
+ },
+ "search": "12,960 + 16,200 entry/filter/exit configs, then 378 exit variants; walk-forward positive (+15/+23 and +259)",
+ "vs_sniper4_same_days": "Sniper4 +$2,172 vs Sniped1 +$665 flat; scalps cannot capture the runners"
+}

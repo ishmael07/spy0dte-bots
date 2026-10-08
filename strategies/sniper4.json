@@ -1,0 +1,56 @@
+{
+ "saved": "2026-10-08",
+ "name": "Sniper4",
+ "tiers": {
+  "A": "Sniper+ setups (5m/15m/1h ST agree, vol>avg, 50-day side, \u226411:30)",
+  "B": "Sniper-only setups (no 50-day check)",
+  "C": "off"
+ },
+ "A": {
+  "size": "2 units",
+  "exit": "Sniper++ ride: stop 1.25 ATR, breakeven +1.5 ATR, prove-it 30m/+0.5 ATR, ride 5m ST, 2h cap",
+  "strike": "1 OTM",
+  "pyramid": "add same qty at +1 ATR (stop to breakeven), only with spare cash"
+ },
+ "B": {
+  "size": "1 unit",
+  "exit": "scalp: stop 0.75 ATR, target 1.5 ATR, 30 min"
+ },
+ "max_trades_per_day": 1,
+ "unit": "$100 flat, or fraction of balance (A base capped at the balance)",
+ "results": {
+  "flat_100_unit": {
+   "unseen_jun1_jul14": -4,
+   "design_jul15_oct7": 3479,
+   "blocks_30d": [
+    -4,
+    1307,
+    2172
+   ]
+  },
+  "compound_90d_from_100": {
+   "all_in": 20862,
+   "half": 17461,
+   "quarter": 7560
+  },
+  "compound_90d_from_500": {
+   "all_in": 113305,
+   "half": 104722
+  },
+  "max_drawdown_half": "69%",
+  "weekly_odds_all_in": {
+   "2x": "21.6%",
+   "10x": "0.8%"
+  }
+ },
+ "caveats": [
+  "searched 3,360 + 112 configs on the same 90 days",
+  "compounding walk-forward did not beat Sniper++ out of sample",
+  "untouched-period P&L \u2248 0"
+ ],
+ "code": [
+  "sniper4.py (search, account())",
+  "sniperpp.py Trader (pyramid add_at/add_budget)",
+  "export4.py"
+ ]
+}

@@ -1,0 +1,7 @@
+__pycache__/
+.DS_Store
+.env
+alpaca/runtime/*
+!alpaca/runtime/data/
+alpaca/runtime/data/*
+!alpaca/runtime/data/live/

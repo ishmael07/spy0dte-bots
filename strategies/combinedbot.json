@@ -1,0 +1,49 @@
+{
+ "saved": "2026-10-08",
+ "name": "CombinedBot",
+ "parts": [
+  "Sniper4 (strategies/sniper4.json)",
+  "Sniped1 (strategies/sniped1.json)"
+ ],
+ "account": "one shared account; positions may overlap; each bot sizes off total equity (Sniper4 f4, Sniped1 f1), capped by free cash",
+ "sleeves": {
+  "all": [
+   1.0,
+   0.5
+  ],
+  "half": [
+   0.5,
+   0.25
+  ],
+  "quarter": [
+   0.25,
+   0.1
+  ]
+ },
+ "span": "Aug 27 \u2013 Oct 7 (29 sessions with 1m data)",
+ "flat_100_unit": {
+  "trades": 31,
+  "per_week": 5.3,
+  "net": 2837,
+  "blocks_10d": [
+   1096,
+   1013,
+   728
+  ],
+  "vs": {
+   "Sniper4": 2172,
+   "Sniped1": 665
+  }
+ },
+ "compound_half": {
+  "100": 1202,
+  "200": 3523,
+  "500": 6537,
+  "vs_sniper4": {
+   "100": 1020,
+   "200": 2196,
+   "500": 7171
+  }
+ },
+ "note": "overlapping positions: 9; with all-in sizing the bots compete for cash, so 50% is the better default"
+}

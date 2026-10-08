@@ -1,0 +1,89 @@
+{
+ "saved": "2026-10-08",
+ "frozen_before_seeing": "sessions before 2026-07-15",
+ "sniper_pp_v1": {
+  "entries": "Sniper+ (5m/15m/1h Supertrend agree, volume > avg, prior close on trade side of 50-day SMA, before 11:30, 1 trade/day)",
+  "exit": {
+   "stop_atr": 1.25,
+   "breakeven_after_atr": 1.5,
+   "prove_it": "exit at 30 min if SPY has not moved +0.5 ATR in favor",
+   "trail": "5m Supertrend flip",
+   "cap": "2 hours",
+   "flat": "15:45"
+  },
+  "strike": "nearest affordable",
+  "results_flat_100_jul15_oct7": {
+   "trades": 14,
+   "net": 1107,
+   "worst": -43,
+   "mdd": 63
+  }
+ },
+ "sniper_v1_with_new_exits": {
+  "results_flat_100_jul15_oct7": {
+   "trades": 23,
+   "net": 959
+  }
+ },
+ "sniper_plus_scalp_v1": {
+  "entries": "Sniper+",
+  "exit": {
+   "stop_atr": 0.75,
+   "target_atr": 1.5,
+   "time_limit": "30 min",
+   "trail": null
+  },
+  "design_window_result": {
+   "trades": 14,
+   "net": 207,
+   "win_pct": 64,
+   "avg_hold_min": 15
+  }
+ },
+ "sniper_pp_scalp_v1": {
+  "entries": "Sniper+",
+  "exit": {
+   "stop_atr": 0.75,
+   "breakeven_after_atr": 0.75,
+   "target_atr": 1.5,
+   "time_limit": "20 min"
+  },
+  "design_window_result": {
+   "trades": 14,
+   "net": 203,
+   "win_pct": 57,
+   "avg_hold_min": 12
+  }
+ },
+ "sniper_ppp_v1": {
+  "saved": "2026-10-08",
+  "entries": "A = Sniper+ setups (runner exit), B = Sniper-only setups (scalp exit); up to 2 trades/day, non-overlapping",
+  "runner_exit": {
+   "stop_atr": 1.25,
+   "prove_it": "30 min / +0.5 ATR",
+   "bank_half_at_atr": 1.5,
+   "then": "stop to breakeven, ride 5m Supertrend, 2h cap"
+  },
+  "scalp_exit": {
+   "stop_atr": 0.75,
+   "target_atr": 1.5,
+   "time_limit": "30 min"
+  },
+  "results_flat_100": {
+   "unseen_jun1_jul14": {
+    "trades": 7,
+    "net": 81
+   },
+   "design_jul15_oct7": {
+    "trades": 26,
+    "net": 594
+   },
+   "win_pct": 52
+  },
+  "weekly_odds_all_in": {
+   "10x": "~0.5%",
+   "2x": "~21%"
+  },
+  "note": "unseen days were already viewed before this was designed, so no clean holdout remains"
+ }
+}

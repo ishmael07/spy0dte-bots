@@ -1,0 +1,46 @@
+{
+ "saved": "2026-10-08",
+ "data": "SPY 5m bars Jul 15 \u2013 Oct 7 2026 (60 sessions); 0DTE contracts priced from real daily OHLC + intraday model (\u00b13.6%)",
+ "common": {
+  "instrument": "SPY 0DTE calls/puts, buy only",
+  "signal_sources": "any of: sc, storb, orb5, orb15, orb30, orb_rt15, open_drive, vwap_x, first_bar, gap_go, ema_x on 5m or 15m",
+  "filters": [
+   "5m Supertrend(10,3) agrees",
+   "15m Supertrend agrees",
+   "1h Supertrend agrees",
+   "signal bar volume > 20-bar average",
+   "signal before 11:30 ET"
+  ],
+  "trades_per_day": 1,
+  "entry": "next 5m bar open, nearest affordable strike",
+  "exit": "SPY stop 1.5\u00d7ATR(5m) from signal close; else exit when the 5m Supertrend flips; 2-hour cap; flat by 15:45"
+ },
+ "sniper_v1": {
+  "extra_filters": [],
+  "results_flat_100": {
+   "trades": 23,
+   "net": 779,
+   "win_pct": 35,
+   "blocks": [
+    474,
+    153,
+    153
+   ]
+  }
+ },
+ "sniper_plus_v1": {
+  "extra_filters": [
+   "prior close on trade side of 50-day SMA"
+  ],
+  "results_flat_100": {
+   "trades": 14,
+   "net": 992,
+   "win_pct": 50
+  }
+ },
+ "code": [
+  "sniper.py (features/events)",
+  "sniper_final.py (rules + compounding)",
+  "export3.py + web/template3.html (page)"
+ ]
+}
