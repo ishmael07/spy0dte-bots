@@ -19,7 +19,7 @@ from zoneinfo import ZoneInfo
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RUNTIME = os.path.join(ROOT, "alpaca", "runtime")
 sys.path.insert(0, ROOT)
-from alpaca import feed  # noqa: E402
+from alpaca import feed, orders  # noqa: E402
 
 ET = ZoneInfo("America/New_York")
 START = "2026-10-09"
@@ -59,26 +59,27 @@ def live_days(start):
         os.path.basename(f)[7:17] for f in glob.glob("data/live/spy_1m_*.json")})
 
 
-def engine(start):
+def engine(start, H=None, today=None, trade=False):
     days = [d for d in live_days(start) if d >= start]
     if not days:
         return "no live days yet"
     env = dict(os.environ, PYTHONPATH=ROOT)
     py = [sys.executable, "-W", "ignore"]
     subprocess.run(py + [os.path.join(ROOT, "paper.py"), *days, "--start", start], check=True, env=env, stdout=subprocess.DEVNULL)
+    order_log = orders.sync(H, today, datetime.now(ET)) if trade else []
     subprocess.run(py + [os.path.join(ROOT, "export_paper.py")], check=True, env=env, stdout=subprocess.DEVNULL)
     out = subprocess.run(py + [os.path.join(ROOT, "live_poll.py"), "--summary-only"], env=env, capture_output=True, text=True)
-    return out.stdout.strip()
+    return "\n".join(order_log + [out.stdout.strip()])
 
 
-def poll(H, today, start):
+def poll(H, today, start, trade=False):
     bars = feed.refresh_today(H, today)
     if not bars:
         return "no bars yet"
     spot = float(bars[-1]["c"])
     n = feed.record_quotes(H, today, spot)
     t = time.time()
-    summary = engine(start)
+    summary = engine(start, H, today, trade)
     return f"SPY {spot:.2f} · {n} quotes · engine {time.time() - t:.1f}s\n{summary}"
 
 
@@ -89,6 +90,7 @@ def main():
     ap.add_argument("--start", default=START)
     ap.add_argument("--max-minutes", type=float, default=None, help="exit after this long (GitHub job limit)")
     ap.add_argument("--publish-every", type=int, default=0, help="commit+push page and data every N polls (GitHub mode)")
+    ap.add_argument("--orders", action="store_true", help="mirror bot trades as real orders in the Alpaca paper account")
     a = ap.parse_args()
     began = time.time()
     polls = 0
@@ -104,7 +106,7 @@ def main():
             history_for = today
         if c["is_open"]:
             try:
-                print(now.strftime("%H:%M:%S"), poll(H, today, a.start), flush=True)
+                print(now.strftime("%H:%M:%S"), poll(H, today, a.start, a.orders), flush=True)
                 polls += 1
                 if a.publish_every and polls % a.publish_every == 0:
                     publish(f"paper poll {today} {now.strftime('%H:%M')} ET")

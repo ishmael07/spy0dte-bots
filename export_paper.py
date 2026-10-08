@@ -31,6 +31,7 @@ def main():
     phases = (["dry", "live"] if phase_days["live"] else ["live", "dry"]) if start else ["dry"]   # last = default view
     labels = {"dry": "Replay Mon–Thu (Oct 5–8)", "live": f"Live paper (from {pd.Timestamp(start).strftime('%a %b %-d')})" if start else ""}
     runs, chart, chart1 = {}, {}, {}
+    order_state = json.load(open("data/live/orders.json")) if os.path.exists("data/live/orders.json") else {}
     for k, tr in res.items():
         phase, key, cap, size = k.split("|")
         out = []
@@ -42,6 +43,12 @@ def main():
             fr = m1 if one else f5
             step = 1 if one else 5
             sig = x.get("si", x.get("i"))
+            tag = f"{key}-{cap}-{x['day'][2:].replace('-', '')}-{x['side']}{x.get('strike')}-{x['ei']}"
+            o = order_state.get(tag)
+            if o:
+                x["alpaca"] = dict(buy=(o.get("buy") or {}).get("fill"), add=(o.get("add") or {}).get("fill"),
+                                   sell=(o.get("sell") or {}).get("fill"), pnl=o.get("pnl"),
+                                   status=(o.get("sell") or o.get("buy") or {}).get("status"))
             x["tIn"], x["tOut"] = ts(fr.t[x["ei"]]), ts(fr.t[x["xi"]] + pd.Timedelta(minutes=step))
             x["path"] = [[ts(fr.t[x["ei"] + j]), p] for j, p in enumerate(x["path"])]
             x["vol"] = round(float(fr.relvol.iat[sig]), 2) if "relvol" in fr else 0
@@ -83,7 +90,9 @@ def main():
             week=dict(x2=0, x10=0, up=0), realDays=sum(1 for d in pdays if source.get(d) == "real"),
             modelDays=sum(1 for d in pdays if source.get(d) != "real"), tradeDays=len({x["day"] for x in out}), sessions=len(pdays),
             bestUsd=max((x["pnl"] for x in out), default=0), worstUsd=min((x["pnl"] for x in out), default=0),
-            todayPnl=round(sum(x["pnl"] for x in out if pdays and x["day"] == pdays[-1]), 2), open=sum(1 for x in out if x.get("open"))))
+            todayPnl=round(sum(x["pnl"] for x in out if pdays and x["day"] == pdays[-1]), 2), open=sum(1 for x in out if x.get("open")),
+            alpacaPnl=round(sum(r["pnl"] for r in order_state.values() if r.get("bot") == key and r.get("cap") == int(cap) and r.get("pnl") is not None), 2)
+            if phase == "live" and size == "half" else None))
     for store, fr in ((chart, f5), (chart1, m1)):
         for d in list(store):
             g = fr[fr.day == d]

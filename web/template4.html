@@ -237,7 +237,7 @@ tr.pick td { font-weight: 600; }
   <section class="panel board" id="board" hidden>
     <div class="ph"><h2 id="boardTitle">Leaderboard</h2><span class="live" id="live"><i></i><span></span></span></div>
     <div class="podium" id="podium"></div>
-    <div class="tbl"><table class="ranks"><thead><tr><th>#</th><th>Bot</th><th>$100 acct</th><th>$500 acct</th><th>Return</th><th>Win rate</th><th>Trades</th><th>Best</th><th>Worst</th><th>Max DD</th><th id="todayHead">Today</th></tr></thead><tbody id="ranks"></tbody></table></div>
+    <div class="tbl"><table class="ranks"><thead><tr><th>#</th><th>Bot</th><th>$100 acct</th><th>$500 acct</th><th>Return</th><th>Win rate</th><th>Trades</th><th>Best</th><th>Worst</th><th>Max DD</th><th id="todayHead">Today</th><th id="alpHead">Alpaca P&amp;L</th></tr></thead><tbody id="ranks"></tbody></table></div>
   </section>
 
   <div class="foot"><span id="footL"></span><span id="footR"></span></div>
@@ -409,7 +409,7 @@ function renderTrade() {
     <div><div class="big ${cls(t.pnl)}">${sgnUsd(t.pnl)}</div><div class="${cls(t.pnl)} num">${sgn(t.pct, 1)}% on ${money(t.cost)}</div></div>
     <div class="leg"><span class="lbl">Buy</span><span class="tm">${hhmm(t.tIn)}</span><span class="px">$${t.optIn.toFixed(2)}</span><span class="sub">SPY ${t.spyIn.toFixed(2)}</span></div>
     <div class="leg"><span class="lbl">Sell</span><span class="tm">${hhmm(t.tOut)}</span><span class="px">$${t.optOut.toFixed(2)}</span><span class="sub">SPY ${t.spyOut.toFixed(2)} · ${WHY[t.reason] || t.reason}</span></div>
-    <dl class="rows"><dt>Held</dt><dd>${held} min</dd><dt>Stop (SPY)</dt><dd>${t.stopLvl.toFixed(2)}</dd><dt>Volume</dt><dd>${t.vol.toFixed(2)}× avg</dd>${t.half ? "<dt>Half sold</dt><dd>at +1.5 ATR</dd>" : ""}${t.addQty ? `<dt>Added</dt><dd>×${t.addQty} @ $${t.addPx.toFixed(2)}</dd>` : ""}<dt>Balance after</dt><dd>${money(t.eq)}</dd></dl>
+    <dl class="rows"><dt>Held</dt><dd>${held} min</dd><dt>Stop (SPY)</dt><dd>${t.stopLvl.toFixed(2)}</dd><dt>Volume</dt><dd>${t.vol.toFixed(2)}× avg</dd>${t.half ? "<dt>Half sold</dt><dd>at +1.5 ATR</dd>" : ""}${t.addQty ? `<dt>Added</dt><dd>×${t.addQty} @ $${t.addPx.toFixed(2)}</dd>` : ""}<dt>Balance after</dt><dd>${money(t.eq)}</dd>${t.alpaca ? `<dt>Alpaca fills</dt><dd>${t.alpaca.buy != null ? "$" + t.alpaca.buy.toFixed(2) : "…"} → ${t.alpaca.sell != null ? "$" + t.alpaca.sell.toFixed(2) : (t.open ? "open" : "…")}</dd>${t.alpaca.pnl != null ? `<dt>Alpaca P&amp;L</dt><dd class="${cls(t.alpaca.pnl)}">${sgnUsd(t.alpaca.pnl)}</dd>` : ""}` : ""}</dl>
     <div class="checks">${D.paper ? `<span class="chk" style="${t.fills === "real" ? "" : "background:var(--grid);color:var(--muted)"}">${t.fills === "real" ? "real option prices" : "modeled prices"}</span>` : ""}${t.kind ? `<span class="chk">${({ runner: "runner · Sniper+ setup", ride: "ride · Sniper+ setup", scalp: "scalp · Sniper setup", pullback1m: "1m pullback · 5m/15m/1h/50-day ✓" })[t.kind]}</span>` : ""}${["sniper_ppp", "sniper4", "sniped1", "combined"].includes(state.rule) ? "" : state.rule === "daily" ? `<span class="chk">quality ${t.score}/10</span>` : '<span class="chk">5m ✓</span><span class="chk">15m ✓</span><span class="chk">1h ✓</span><span class="chk">vol ✓</span>' + (state.rule !== "sniper" ? '<span class="chk">50-day ✓</span>' : "") + (state.rule.endsWith("scalp") ? '<span class="chk">scalp</span>' : "")}</div>`;
   renderHud(null);
   renderEquity();
@@ -494,7 +494,8 @@ function renderBoard() {
     <td>${usd(r.s100.final)}</td><td>${usd(r.s500.final)}</td><td class="${cls(r.s100.ret)}">${sgn(r.s100.ret, 1)}%</td>
     <td>${r.s100.trades ? r.s100.winRate.toFixed(0) + "%" : "—"}</td><td>${r.s100.trades}</td>
     <td class="${cls(r.s100.bestUsd)}">${r.s100.trades ? sgnUsd(r.s100.bestUsd) : "—"}</td><td class="${cls(r.s100.worstUsd)}">${r.s100.trades ? sgnUsd(r.s100.worstUsd) : "—"}</td>
-    <td>${r.s100.trades ? "−" + r.s100.mdd.toFixed(0) + "%" : "—"}</td><td class="${cls(r.s100.todayPnl)}">${r.s100.trades ? sgnUsd(r.s100.todayPnl) : "—"}</td></tr>`).join("");
+    <td>${r.s100.trades ? "−" + r.s100.mdd.toFixed(0) + "%" : "—"}</td><td class="${cls(r.s100.todayPnl)}">${r.s100.trades ? sgnUsd(r.s100.todayPnl) : "—"}</td>
+    <td>${r.s100.alpacaPnl == null ? `<span class="mut">${state.period === "live" ? "50% only" : "—"}</span>` : `<span class="${cls(r.s100.alpacaPnl)}">${sgnUsd(r.s100.alpacaPnl)}</span> <span class="mut">·</span> <span class="${cls(r.s500.alpacaPnl)}">${sgnUsd(r.s500.alpacaPnl)}</span>`}</td></tr>`).join("");
   for (const el of document.querySelectorAll("#podium .pcard, #ranks tr")) {
     const go = () => { state.rule = el.dataset.k; state.k = 0; fixPeriod(); update(); };
     el.onclick = go;
