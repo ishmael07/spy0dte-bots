@@ -31,4 +31,4 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          python alpaca/run.py --max-minutes 340 --publish-every 5
+          python alpaca/run.py --max-minutes 340 --publish-every 5 --orders
