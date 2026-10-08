@@ -160,8 +160,11 @@ class OneMin:
                      path=[dm.price(key, j - b, float(c[j])) for j in range(ei, xi + 1)])
         return r
 
-    def run(self, fam, how, win, ex, max_day, rule, days, budget=100.0, frac=None, capital=100.0, detail=False):
+    def run(self, fam, how, win, ex, max_day, rule, days, budget=100.0, frac=None, capital=100.0, detail=False,
+            acct_rule="none", sessions=None):
         calls, puts = self.entries(fam)
+        from acct import Account
+        A = Account(capital, acct_rule, sessions or list(days))
         cash, out = capital, []
         for d in days:
             b, n = self.base[d], len(self.models[d].hm)
@@ -174,12 +177,19 @@ class OneMin:
                 side = "C" if calls[i] else "P"
                 if not self.confirm(1 if side == "C" else -1, i, how):
                     continue
-                bud = budget if frac is None else frac * cash
-                exx = dict(ex, add_budget=(None if frac is None else max(cash - bud, 0.0))) if ex.get("add_at") else ex
+                if frac is not None and not A.allowed(d):
+                    break
+                bp = A.buying_power(d) if frac is not None else None
+                bud = budget if frac is None else min(frac * A.equity(), bp)
+                exx = dict(ex, add_budget=(None if frac is None else max(bp - bud, 0.0))) if ex.get("add_at") else ex
                 t = self.trade(d, i, side, exx, bud, rule, detail)
                 if t is None:
                     continue
-                cash += t["pnl"]
+                if frac is None:
+                    cash += t["pnl"]
+                else:
+                    A.book(d, t["cost"], t["pnl"])
+                    cash = A.equity()
                 t["eq"] = round(cash, 2)
                 out.append(t)
                 busy, cnt = t["xi"], cnt + 1

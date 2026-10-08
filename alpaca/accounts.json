@@ -1,0 +1,4 @@
+{
+  "acct2": {"bot": "sniper4", "cap": 500, "rule": "pdt", "key_env": "ALPACA2_KEY_ID", "secret_env": "ALPACA2_SECRET_KEY"},
+  "acct3": {"bot": "combined", "cap": 500, "rule": "pdt", "key_env": "ALPACA3_KEY_ID", "secret_env": "ALPACA3_SECRET_KEY"}
+}

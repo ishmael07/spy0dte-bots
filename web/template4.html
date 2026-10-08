@@ -181,6 +181,10 @@ tr.pick td { font-weight: 600; }
 .ranks tr.sel td { background: var(--grid); }
 .opentag { font: 600 9px var(--f-ui); letter-spacing: .08em; text-transform: uppercase; padding: 2px 5px; border-radius: 4px; background: var(--up-bg); color: var(--up); margin-left: 6px; }
 .empty { padding: 18px 14px 6px; color: var(--muted); font-size: 13px; }
+.accts { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 14px 0; }
+.acct { display: grid; gap: 2px; padding: 8px 12px; border-radius: 8px; background: var(--grid); min-width: 180px; }
+.acct span { font: 400 11px var(--f-num); color: var(--muted); }
+.acct b { font: 500 15px var(--f-num); }
 [hidden] { display: none !important; }
 </style>
 
@@ -192,6 +196,7 @@ tr.pick td { font-weight: 600; }
       <div class="seg" id="segPeriod" role="group" aria-label="Start date"></div>
       <div class="seg" id="segCap" role="group" aria-label="Starting capital"></div>
       <div class="seg" id="segSize" role="group" aria-label="Position size"></div>
+      <div class="seg" id="segAcct" role="group" aria-label="Account rules" hidden></div>
     </div>
   </header>
 
@@ -236,6 +241,7 @@ tr.pick td { font-weight: 600; }
 
   <section class="panel board" id="board" hidden>
     <div class="ph"><h2 id="boardTitle">Leaderboard</h2><span class="live" id="live"><i></i><span></span></span></div>
+    <div class="accts" id="accts" hidden></div>
     <div class="podium" id="podium"></div>
     <div class="tbl"><table class="ranks"><thead><tr><th>#</th><th>Bot</th><th>$100 acct</th><th>$500 acct</th><th>Return</th><th>Win rate</th><th>Trades</th><th>Best</th><th>Worst</th><th>Max DD</th><th id="todayHead">Today</th><th id="alpHead">Alpaca P&amp;L</th></tr></thead><tbody id="ranks"></tbody></table></div>
   </section>
@@ -268,12 +274,14 @@ const state = {
   rule: D.names[store.rule] ? store.rule : "combined",
   cap: D.capitals.includes(store.cap) ? store.cap : 100,
   size: D.sizing.includes(store.size) ? store.size : "half",
+  acct: ["none", "cash", "pdt"].includes(store.acct) ? store.acct : "none",
   k: 0,
 };
-const save = () => { try { localStorage.setItem("spy0dte-sniper2", JSON.stringify({ rule: state.rule, period: state.period, cap: state.cap, size: state.size })); } catch {} };
+const save = () => { try { localStorage.setItem("spy0dte-sniper2", JSON.stringify({ rule: state.rule, period: state.period, cap: state.cap, size: state.size, acct: state.acct })); } catch {} };
 const fixPeriod = () => { const ps = D.periodsBy[state.rule]; if (!ps.includes(state.period)) state.period = ps.at(-1); };
 fixPeriod();
-const run = () => D.runs[`${state.rule}|${state.period}|${state.cap}|${state.size}`];
+const acctSuf = () => (D.paper && state.acct !== "none" ? `|${state.acct}` : "");
+const run = () => D.runs[`${state.rule}|${state.period}|${state.cap}|${state.size}${acctSuf()}`];
 const tf = () => D.tf[state.rule];
 const ttf = (t) => (t && t.tf) || tf();
 const chartOf = (day, t) => (ttf(t) === 1 ? D.chart1[day] : D.chart[day]);
@@ -295,6 +303,10 @@ function renderControls() {
   seg($("segPeriod"), D.periodsBy[state.rule].map((p) => [p, D.periodLabels ? D.periodLabels[p] : tf() === 1 ? `${p} days · 1m data` : `${p} days`]), state.period, (k) => { state.period = k; state.k = 0; update(); });
   seg($("segCap"), D.capitals.map((c) => [c, "$" + c]), state.cap, (k) => { state.cap = k; update(); });
   seg($("segSize"), D.sizing.map((z) => [z, SZ[z]]), state.size, (k) => { state.size = k; update(); });
+  if (D.paper) {
+    $("segAcct").hidden = false;
+    seg($("segAcct"), [["none", "No account limits"], ["cash", "Cash acct · T+1"], ["pdt", "<$25K · 3 trades / 5 days"]], state.acct, (k) => { state.acct = k; update(); });
+  }
 }
 
 function renderKpis() {
@@ -478,11 +490,19 @@ function renderBoard() {
   live.querySelector("span").textContent = D.marketOpen ? `LIVE · updated ${D.updated} ET` : (D.updated ? `Market closed · last update ${D.updated} ET` : `Live paper starts ${D.liveStart} 9:30 ET`);
   $("boardTitle").textContent = ph === "live" ? "Leaderboard · live paper" : "Leaderboard · replay";
   $("todayHead").textContent = ph === "live" ? "Today" : "Last day";
-  const rows = Object.keys(D.names).map((k) => ({ k, s100: D.runs[`${k}|${ph}|100|${z}`].stats, s500: D.runs[`${k}|${ph}|500|${z}`].stats }));
+  const rows = Object.keys(D.names).map((k) => ({ k, s100: D.runs[`${k}|${ph}|100|${z}${acctSuf()}`].stats, s500: D.runs[`${k}|${ph}|500|${z}${acctSuf()}`].stats }));
   const any = rows.some((r) => r.s100.trades);
   rows.sort((a, b) => b.s100.ret - a.s100.ret || b.s500.ret - a.s500.ret || b.s100.trades - a.s100.trades);
   const medal = (i) => `<span class="medal ${i < 3 ? "m" + (i + 1) : "mN"}">${i + 1}</span>`;
   const usd = (v) => money(v, 2);
+  const ac = D.accounts || {};
+  const accList = Object.entries(ac).filter(([, v]) => v && v.equity != null);
+  $("accts").hidden = !(accList.length && ph === "live");
+  $("accts").innerHTML = accList.map(([name, v]) => {
+    const chg = v.equity - v.last_equity;
+    const who = name === "shared" ? "All bots · shared paper acct" : `${D.names[v.bot]} · own $${v.cap} paper acct`;
+    return `<div class="acct"><span>${who}</span><b>${money(v.equity, 2)} <span class="${cls(chg)}">${sgnUsd(chg)} today</span></b>${name === "shared" ? "" : `<span>day trades used ${v.daytrades}/3 (5-day window)</span>`}</div>`;
+  }).join("");
   $("podium").innerHTML = any ? rows.slice(0, 3).map((r, i) => `
     <button class="pcard ${r.k === state.rule ? "sel" : ""}" data-k="${r.k}" type="button">
       <div class="top">${medal(i)}<span class="nm">${D.names[r.k]}</span><span class="ret ${cls(r.s100.ret)}">${sgn(r.s100.ret, 1)}%</span></div>

@@ -8,6 +8,7 @@ rerun all 10 bots on everything so far (same code as the backtests), rebuild the
 Output: alpaca/runtime/web/paper.html (open in a browser), alpaca/runtime/data/paper_results.pkl
 """
 import argparse
+import json
 import os
 import shutil
 import subprocess
@@ -53,6 +54,19 @@ def publish(message):
             subprocess.run(git + ["pull", "-q", "--rebase", "-X", "ours"], check=False)
 
 
+def dedicated_accounts():
+    """Extra Alpaca paper accounts, one bot each (alpaca/accounts.json + env keys). Missing keys → skipped."""
+    path = os.path.join(ROOT, "alpaca", "accounts.json")
+    out = []
+    for name, cfg in (json.load(open(path)) if os.path.exists(path) else {}).items():
+        kid, sec = os.environ.get(cfg["key_env"]), os.environ.get(cfg["secret_env"])
+        if kid and sec:
+            out.append(dict(name=name, bot=cfg["bot"], cap=cfg["cap"], rule=cfg.get("rule", "pdt"),
+                            key=f"live|{cfg['bot']}|{cfg['cap']}|half" + ("" if cfg.get("rule", "pdt") == "none" else f"|{cfg.get('rule', 'pdt')}"),
+                            H={"APCA-API-KEY-ID": kid, "APCA-API-SECRET-KEY": sec}))
+    return out
+
+
 def live_days(start):
     import glob
     return sorted({os.path.basename(f)[7:17] for f in glob.glob("data/live/quotes_*.json")} & {
@@ -66,7 +80,17 @@ def engine(start, H=None, today=None, trade=False):
     env = dict(os.environ, PYTHONPATH=ROOT)
     py = [sys.executable, "-W", "ignore"]
     subprocess.run(py + [os.path.join(ROOT, "paper.py"), *days, "--start", start], check=True, env=env, stdout=subprocess.DEVNULL)
-    order_log = orders.sync(H, today, datetime.now(ET)) if trade else []
+    order_log = []
+    if trade:
+        now = datetime.now(ET)
+        order_log = orders.sync(H, today, now)
+        summaries = {"shared": orders.account_summary(H)}
+        for acc in dedicated_accounts():
+            log = orders.sync(acc["H"], today, now, state_file=f"data/live/orders_{acc['name']}.json",
+                              only=[acc["key"]], label=f"[{acc['name']}] ")
+            order_log += log
+            summaries[acc["name"]] = dict(orders.account_summary(acc["H"]) or {}, bot=acc["bot"], cap=acc["cap"], rule=acc["rule"])
+        json.dump(summaries, open("data/live/accounts.json", "w"), indent=1)
     subprocess.run(py + [os.path.join(ROOT, "export_paper.py")], check=True, env=env, stdout=subprocess.DEVNULL)
     out = subprocess.run(py + [os.path.join(ROOT, "live_poll.py"), "--summary-only"], env=env, capture_output=True, text=True)
     return "\n".join(order_log + [out.stdout.strip()])

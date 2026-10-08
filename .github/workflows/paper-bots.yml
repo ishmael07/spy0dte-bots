@@ -28,6 +28,11 @@ jobs:
         env:
           ALPACA_KEY_ID: ${{ secrets.ALPACA_KEY_ID }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          # optional dedicated paper accounts (alpaca/accounts.json); skipped if the secrets aren't set
+          ALPACA2_KEY_ID: ${{ secrets.ALPACA2_KEY_ID }}
+          ALPACA2_SECRET_KEY: ${{ secrets.ALPACA2_SECRET_KEY }}
+          ALPACA3_KEY_ID: ${{ secrets.ALPACA3_KEY_ID }}
+          ALPACA3_SECRET_KEY: ${{ secrets.ALPACA3_SECRET_KEY }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

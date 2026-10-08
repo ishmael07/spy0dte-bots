@@ -56,28 +56,36 @@ class Combined:
             x = self.S1.trade(s["day"], s["sig"], s["side"], ex, budget, C["rule"], detail)
         return x
 
-    def run_sleeves(self, capital, f4, f1, detail=False):
+    def run_sleeves(self, capital, f4, f1, detail=False, acct_rule="none", sessions=None):
         """Each bot sizes off total equity (cash + money in open trades): Sniper4 unit = f4 × equity,
-        Sniped1 unit = f1 × equity, both capped by free cash."""
-        cash, open_, out = capital, [], []
+        Sniped1 unit = f1 × equity, both capped by usable cash under the account rule (acct.py)."""
+        from acct import Account
+        A = Account(capital, acct_rule, sessions or list(self.days))
+        open_, out = [], []
         for s in self.sched:
+            day = s["t_in"].tz_convert("America/New_York").strftime("%Y-%m-%d")
             for p in [p for p in open_ if p["t_out"] <= s["t_in"]]:
-                cash += p["cost"] + p["pnl"]
+                A.close(p["day"], p["cost"] + p["pnl"])
                 open_.remove(p)
-            equity = cash + sum(p["cost"] for p in open_)
-            if cash < 5:
+            if not A.allowed(day):
                 continue
+            free = A.buying_power(day)
+            if free < 5:
+                continue
+            equity = A.equity() + sum(p["cost"] for p in open_)
             unit = (f4 if s["bot"] == "Sniper4" else f1) * equity
-            x = self._trade(s, min(unit, cash), cash, detail)
+            x = self._trade(s, min(unit, free), free, detail)
             if x is None:
                 continue
             cost = x["cost"]
-            cash -= cost
-            open_.append(dict(t_out=s["t_out"], cost=cost, pnl=x["pnl"]))
+            A.open(day, cost)
+            open_.append(dict(t_out=s["t_out"], cost=cost, pnl=x["pnl"], day=day))
             x.update(bot=s["bot"], t_in=s["t_in"], t_out=s["t_out"])
             out.append(x)
         for p in open_:
-            cash += p["cost"] + p["pnl"]
+            A.close(p["day"], p["cost"] + p["pnl"])
+        A.roll("9999-12-31")
+        cash = A.equity()
         out.sort(key=lambda q: q["t_out"])     # list in close order so the running balance reads correctly
         running = capital
         for x in out:

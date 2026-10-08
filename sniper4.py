@@ -103,28 +103,40 @@ SNIPER4 = dict(exit={"A": "ride", "B": "scalp", "C": "scalp"}, size={"A": 2.0, "
                max_day=1, pyramid=True, strike="otm1", a_window=120)
 
 
-def account(T, ev, days, capital, frac, cfg=SNIPER4, detail=False):
-    """frac=None: flat $100 unit. Otherwise unit = frac × balance; A-tier base = min(2 units, balance),
-    and the +1 ATR pyramid add uses whatever cash is left (none when all-in)."""
+def account(T, ev, days, capital, frac, cfg=SNIPER4, detail=False, acct_rule="none", sessions=None):
+    """frac=None: flat $100 unit. Otherwise unit = frac × equity; A-tier base = min(2 units, buying power),
+    and the +1 ATR pyramid add uses whatever buying power is left (none when all-in).
+    acct_rule: none | cash (T+1 settlement) | pdt (3 day trades per 5 sessions) — see acct.py."""
+    from acct import Account
     ev = ev[ev.day.isin(days)].sort_values("i")
     tier = tiers(ev, cfg["a_window"])
+    A = Account(capital, acct_rule, sessions or sorted(set(days)))
     cash, out, busy, cnt = capital, [], {}, {}
     for r, t in zip(ev.itertuples(), tier):
         if not t or cfg["size"][t] <= 0 or cnt.get(r.day, 0) >= cfg["max_day"] or r.i <= busy.get(r.day, -1):
             continue
-        unit = 100.0 if frac is None else frac * cash
+        if frac is not None and not A.allowed(r.day):
+            continue
         ex = dict(EXITS[cfg["exit"][t]])
-        base = cfg["size"][t] * unit if frac is None else min(cfg["size"][t] * unit, cash)
+        if frac is None:
+            base = cfg["size"][t] * 100.0
+        else:
+            bp = A.buying_power(r.day)
+            base = min(cfg["size"][t] * frac * A.equity(), bp)
         if t == "A" and cfg["pyramid"]:
             ex["add_at"] = 1.0
-            ex["add_budget"] = None if frac is None else cash - base
+            ex["add_budget"] = None if frac is None else bp - base
         x = T.trade(r.day, int(r.i), r.side, ex, budget=base, rule=cfg["strike"] if t == "A" else "near", detail=detail)
         if x is None:
             if detail:
                 out.append(dict(day=r.day, side=r.side, skipped=True, eq=round(cash, 2)))
             continue
         x.update(tier=t, kind=(cfg["exit"]["A"] if t == "A" else "scalp"))
-        cash += x["pnl"]
+        if frac is None:
+            cash += x["pnl"]
+        else:
+            A.book(r.day, x["cost"], x["pnl"])
+            cash = A.equity()
         x["eq"] = round(cash, 2)
         out.append(x)
         busy[r.day] = r.i + x["held"]

@@ -26,6 +26,7 @@ from sniper4 import account as s4_account
 from sniped1 import SNIPED1, OneMin
 from sniperpp import CHECKS, Trader, select
 from combined import Combined
+from acct import RULES
 
 warnings.filterwarnings("ignore")
 LIVE = "data/live"
@@ -174,39 +175,43 @@ def scored(ev):
     return ev
 
 
-def run_bot(key, T, S1, CB, ev, days, capital, size):
+def run_bot(key, T, S1, CB, ev, days, capital, size, rule="none"):
+    from acct import Account
     name, mode, ex = BOTS[key]
     frac = SIZING[size]
+    sess = sorted(days)
     if mode == "cb":
-        return CB.run_sleeves(capital, *SLEEVES[size], detail=True)[0]
+        return CB.run_sleeves(capital, *SLEEVES[size], detail=True, acct_rule=rule, sessions=sess)[0]
     if mode == "s1":
         C = SNIPED1
         return S1.run(C["family"], C["confirm"], C["window"], C["exit"], C["max_day"], C["rule"],
-                      [d for d in S1.days if d in set(days)], frac=frac, capital=capital, detail=True)
+                      [d for d in S1.days if d in set(days)], frac=frac, capital=capital, detail=True, acct_rule=rule, sessions=sess)
     if mode == "s4":
-        return [x for x in s4_account(T, ev, set(days), capital, frac, detail=True)[0] if not x.get("skipped")]
+        return [x for x in s4_account(T, ev, set(days), capital, frac, detail=True, acct_rule=rule, sessions=sess)[0] if not x.get("skipped")]
+    A = Account(capital, rule, sess)
     if mode == "ppp":
-        cash, out, busy, cnt = capital, [], {}, {}
+        out, busy, cnt = [], {}, {}
         for r, kind in plan(ev, "all"):
-            if r.day not in set(days) or cnt.get(r.day, 0) >= 2 or r.i <= busy.get(r.day, -1):
+            if r.day not in set(days) or cnt.get(r.day, 0) >= 2 or r.i <= busy.get(r.day, -1) or not A.allowed(r.day):
                 continue
-            t = T.trade(r.day, int(r.i), r.side, RUNNER if kind == "A" else SCALP, budget=frac * cash, detail=True)
+            t = T.trade(r.day, int(r.i), r.side, RUNNER if kind == "A" else SCALP, budget=A.budget(r.day, frac), detail=True)
             if t is None:
                 continue
-            cash += t["pnl"]
+            A.book(r.day, t["cost"], t["pnl"])
+            cash = A.equity()
             t.update(eq=round(cash, 2), kind="runner" if kind == "A" else "scalp")
             out.append(t)
             busy[r.day], cnt[r.day] = r.i + t["held"], cnt.get(r.day, 0) + 1
         return out
-    cash, out = capital, []
+    out = []
     for r in select(ev, mode).itertuples():
-        if r.day not in set(days):
+        if r.day not in set(days) or not A.allowed(r.day):
             continue
-        t = T.trade(r.day, int(r.i), r.side, ex, budget=frac * cash, detail=True)
+        t = T.trade(r.day, int(r.i), r.side, ex, budget=A.budget(r.day, frac), detail=True)
         if t is None:
             continue
-        cash += t["pnl"]
-        t["eq"] = round(cash, 2)
+        A.book(r.day, t["cost"], t["pnl"])
+        t["eq"] = round(A.equity(), 2)
         out.append(t)
     return out
 
@@ -247,8 +252,9 @@ def main():
                     if key in ("sniped1", "combined"):
                         CB.days = S1.days = [d for d in pdays if d in set(m1.day)]
                         CB.__init__(T=T, S1=S1, ev=ev, days=CB.days)
-                    tr = run_bot(key, T, S1, CB, ev, pdays, cap, size)
-                    results[f"{phase}|{key}|{cap}|{size}"] = tr
+                    for rule in RULES:
+                        tr = run_bot(key, T, S1, CB, ev, pdays, cap, size, rule)
+                        results[f"{phase}|{key}|{cap}|{size}" + ("" if rule == "none" else f"|{rule}")] = tr
     json.dump(dict(days=D["days"], source=src5, start=start), open("data/paper_meta.json", "w"))
     pd.to_pickle(dict(results=results, days=D["days"], source=src5, start=start, f5=T.f5, m1=m1),
                  "data/paper_results.pkl")

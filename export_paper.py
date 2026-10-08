@@ -33,7 +33,9 @@ def main():
     runs, chart, chart1 = {}, {}, {}
     order_state = json.load(open("data/live/orders.json")) if os.path.exists("data/live/orders.json") else {}
     for k, tr in res.items():
-        phase, key, cap, size = k.split("|")
+        parts = k.split("|")
+        phase, key, cap, size = parts[:4]
+        suffix = f"|{parts[4]}" if len(parts) == 5 else ""
         out = []
         for x in tr:
             if x.get("skipped") or "ei" not in x:
@@ -80,7 +82,7 @@ def main():
             mdd = max(mdd, (peak - e) / peak)
         wins = [x for x in out if x["pnl"] > 0]
         losses = [x for x in out if x["pnl"] <= 0]
-        runs[f"{key}|{phase}|{cap}|{size}"] = dict(trades=out, stats=dict(
+        runs[f"{key}|{phase}|{cap}|{size}{suffix}"] = dict(trades=out, stats=dict(
             start=int(cap), final=round(eq[-1], 2), ret=round(100 * (eq[-1] / int(cap) - 1), 1), trades=len(out), skipped=0,
             wins=len(wins), winRate=round(100 * len(wins) / len(out), 1) if out else 0,
             avgWin=round(float(np.mean([x["pct"] for x in wins])), 1) if wins else 0,
@@ -92,7 +94,7 @@ def main():
             bestUsd=max((x["pnl"] for x in out), default=0), worstUsd=min((x["pnl"] for x in out), default=0),
             todayPnl=round(sum(x["pnl"] for x in out if pdays and x["day"] == pdays[-1]), 2), open=sum(1 for x in out if x.get("open")),
             alpacaPnl=round(sum(r["pnl"] for r in order_state.values() if r.get("bot") == key and r.get("cap") == int(cap) and r.get("pnl") is not None), 2)
-            if phase == "live" and size == "half" else None))
+            if phase == "live" and size == "half" and not suffix else None))
     for store, fr in ((chart, f5), (chart1, m1)):
         for d in list(store):
             g = fr[fr.day == d]
@@ -115,8 +117,8 @@ def main():
     for key in BOTS:
         for phase in phases:
             for cap in (100, 500):
-                for size in SIZING:
-                    runs.setdefault(f"{key}|{phase}|{cap}|{size}", dict(trades=[], stats=dict(
+                for size, rsuf in [(z, r) for z in SIZING for r in ("", "|cash", "|pdt")]:
+                    runs.setdefault(f"{key}|{phase}|{cap}|{size}{rsuf}", dict(trades=[], stats=dict(
                         start=cap, final=cap, ret=0, trades=0, skipped=0, wins=0, winRate=0, avgWin=0, avgLoss=0, worst=0, best=0,
                         mdd=0, perWeek=0, odds=None, week=dict(x2=0, x10=0, up=0), realDays=0, modelDays=0, tradeDays=0,
                         sessions=len(phase_days[phase]), bestUsd=0, worstUsd=0, todayPnl=0, open=0)))
@@ -137,7 +139,8 @@ def main():
             r["a"] = rp["table"].get(r["key"], r["a"])
             r["worst"] = min(r["worst"], rp["worst"].get(r["key"], 0))
         days = rp["days"] + [d for d in days if d not in rp["days"]]
-    data = dict(paper=True, marketOpen=market_open, liveStart=pd.Timestamp(start).strftime("%a %b %-d") if start else "",
+    accounts = json.load(open("data/live/accounts.json")) if os.path.exists("data/live/accounts.json") else {}
+    data = dict(paper=True, marketOpen=market_open, accounts=accounts, liveStart=pd.Timestamp(start).strftime("%a %b %-d") if start else "",
                 updated=(last_bar_et + pd.Timedelta(minutes=1)).strftime("%a %-I:%M %p") if last_bar_et is not None and start and last_day >= start else "", days=days, days1=days, chart=chart, chart1=chart1, periods=phases, capitals=[100, 500],
                 sizing=list(SIZING), names={k: v[0] for k, v in BOTS.items()}, runs=runs, table=table,
                 tf={k: (1 if k in ("sniped1", "combined") else 5) for k in BOTS}, periodsBy={k: phases for k in BOTS},

@@ -62,20 +62,28 @@ def refresh(H, rec):
                          filled_qty=int(float(j.get("filled_qty") or 0)))
 
 
-def sync(H, today, now_et):
-    """Compare the engine's trades for today with submitted orders; place what's missing."""
+def sync(H, today, now_et, state_file=STATE, only=None, label=""):
+    """Compare the engine's trades for today with submitted orders; place what's missing.
+    only: list of result keys (e.g. ["live|sniper4|500|half|pdt"]) for a dedicated account; default = every
+    bot's $100/$500 ledger at 50% sizing (shared account)."""
     if not os.path.exists("data/paper_results.pkl"):
         return []
     R = pd.read_pickle("data/paper_results.pkl")
     f5, m1 = R["f5"], R["m1"]
-    state = json.load(open(STATE)) if os.path.exists(STATE) else {}
+    state = json.load(open(state_file)) if os.path.exists(state_file) else {}
     last5 = f5.index[f5.day == today].max() if (f5.day == today).any() else None
     last1 = m1.index[m1.day == today].max() if (m1.day == today).any() else None
     nowmin = now_et.hour * 60 + now_et.minute
     log = []
     for k, trades in R["results"].items():
-        phase, bot, cap, size = k.split("|")
-        if phase != "live" or size != SIZE or int(cap) not in CAPS:
+        parts = k.split("|")
+        if only is not None:
+            if k not in only:
+                continue
+        elif len(parts) != 4:          # shared account mirrors the no-limit ledgers only
+            continue
+        phase, bot, cap, size = parts[:4]
+        if phase != "live" or (only is None and (size != SIZE or int(cap) not in CAPS)):
             continue
         for t in trades:
             if t.get("skipped") or t["day"] != today or "ei" not in t:
@@ -95,11 +103,11 @@ def sync(H, today, now_et):
                 else:
                     oid, st, _ = submit(H, sym, t["qty"], "buy", tag + "-b")
                     rec["buy"] = dict(id=oid, status=st)
-                    log.append(f"BUY  {bot} ${cap}: {t['qty']}× {sym}")
+                    log.append(f"BUY  {label}{bot} ${cap}: {t['qty']}× {sym} → {st}")
             if t.get("addQty") and "add" not in rec and rec["buy"].get("id"):
                 oid, st, _ = submit(H, sym, t["addQty"], "buy", tag + "-a")
                 rec["add"] = dict(id=oid, status=st)
-                log.append(f"ADD  {bot} ${cap}: {t['addQty']}× {sym}")
+                log.append(f"ADD  {label}{bot} ${cap}: {t['addQty']}× {sym} → {st}")
             if not still_open and "sell" not in rec and rec["buy"].get("id"):
                 refresh(H, rec)
                 held = sum(rec[l].get("filled_qty") or 0 for l in ("buy", "add") if l in rec)
@@ -107,7 +115,7 @@ def sync(H, today, now_et):
                     oid, st, _ = submit(H, sym, held, "sell", tag + "-s")
                     rec["sell"] = dict(id=oid, status=st)
                     rec["sim_out"] = t["optOut"]
-                    log.append(f"SELL {bot} ${cap}: {held}× {sym} ({t.get('why', '')})")
+                    log.append(f"SELL {label}{bot} ${cap}: {held}× {sym} ({t.get('why', '')}) → {st}")
             refresh(H, rec)
     if now_et.hour * 100 + now_et.minute >= FLATTEN_HM:
         log += flatten(H, today, state)
@@ -118,8 +126,16 @@ def sync(H, today, now_et):
         if b and s and s.get("fill"):
             cost = sum(p * q * 100 for p, q in b)
             rec["pnl"] = round(s["fill"] * (s.get("filled_qty") or 0) * 100 - cost, 2)
-    json.dump(state, open(STATE, "w"), indent=0)
+    json.dump(state, open(state_file, "w"), indent=0)
     return log
+
+
+def account_summary(H):
+    code, a = _req(H, "GET", "/v2/account")
+    if code != 200:
+        return None
+    return dict(equity=float(a["equity"]), last_equity=float(a["last_equity"]), cash=float(a["cash"]),
+                daytrades=int(a.get("daytrade_count") or 0), pdt=bool(a.get("pattern_day_trader")))
 
 
 def flatten(H, today, state):
