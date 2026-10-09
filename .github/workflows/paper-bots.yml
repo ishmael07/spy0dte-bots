@@ -3,8 +3,15 @@ name: paper-bots
 # the morning job starts before the open and runs ~5h40m; the afternoon job picks up and runs to the close.
 on:
   schedule:
-    - cron: "50 12 * * 1-5"   # 8:50 ET (EDT) / 7:50 ET (EST) — waits for the 9:30 open
-    - cron: "40 18 * * 1-5"   # 2:40 pm ET (EDT) / 1:40 pm (EST) — runs until the close
+    # GitHub sometimes delays or drops scheduled runs, so there are several start triggers. Runs share one
+    # concurrency group: one job runs, at most one more waits; a job that finds the market closed exits at once,
+    # and a late job backfills the minutes it missed from Alpaca's history.
+    - cron: "35 12 * * 1-5"
+    - cron: "50 12 * * 1-5"
+    - cron: "5 13 * * 1-5"
+    - cron: "20 13 * * 1-5"
+    - cron: "40 18 * * 1-5"
+    - cron: "10 19 * * 1-5"
   workflow_dispatch:
 
 permissions:

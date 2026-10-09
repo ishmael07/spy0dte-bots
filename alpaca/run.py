@@ -128,6 +128,13 @@ def main():
         if history_for != today:
             feed.refresh_history(H, today)
             history_for = today
+            if c["is_open"] or now.hour * 100 + now.minute >= 1600:
+                # started late (or after the close): rebuild the part of the session we weren't here for
+                try:
+                    n = feed.backfill_quotes(H, today, feed.refresh_today(H, today))
+                    print(now.strftime("%H:%M:%S"), f"backfilled {n} option minutes from Alpaca history", flush=True)
+                except Exception as e:
+                    print("backfill error:", repr(e), flush=True)
         if c["is_open"]:
             try:
                 print(now.strftime("%H:%M:%S"), poll(H, today, a.start, a.orders), flush=True)

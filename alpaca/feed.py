@@ -116,3 +116,46 @@ def record_quotes(H, today, spot, width=10):
         log.setdefault(key, {})[minute] = [bid or 0.0, ask]
     json.dump(log, open(path, "w"))
     return len(j.get("snapshots") or {})
+
+
+def backfill_quotes(H, today, spy_bars, margin=8):
+    """Fill minutes missing from today's quote log with real option minute bars (trade closes) from Alpaca's
+    history — used when a job starts late, so a skipped/late start never loses the morning. Free plan: bars are
+    ~15 min delayed, so this covers everything up to ~15 min ago; live quotes cover the rest."""
+    if not spy_bars:
+        return 0
+    lo = min(float(b["l"]) for b in spy_bars) - margin
+    hi = max(float(b["h"]) for b in spy_bars) + margin
+    syms, token = [], None
+    while True:
+        p = dict(underlying_symbols="SPY", expiration_date=today, strike_price_gte=str(int(lo)), strike_price_lte=str(int(hi) + 1), limit=1000)
+        if token:
+            p["page_token"] = token
+        j = _get(H, f"{TRADE}/v2/options/contracts", p)
+        syms += [c["symbol"] for c in j.get("option_contracts") or []]
+        token = j.get("next_page_token")
+        if not token:
+            break
+    path = f"data/live/quotes_{today}.json"
+    log = json.load(open(path)) if os.path.exists(path) else {}
+    filled = 0
+    for i in range(0, len(syms), 50):
+        token = None
+        while True:
+            p = dict(symbols=",".join(syms[i:i + 50]), timeframe="1Min", start=f"{today}T13:30:00Z", limit=10000)
+            if token:
+                p["page_token"] = token
+            j = _get(H, f"{DATA}/v1beta1/options/bars", p)
+            for sym, bl in (j.get("bars") or {}).items():
+                key = f"{sym[-9]}{int(sym[-8:]) // 1000}"
+                rec = log.setdefault(key, {})
+                for b in bl:
+                    minute = b["t"][11:16]
+                    if minute not in rec:                 # never overwrite a live quote
+                        rec[minute] = [b["c"], b["c"]]
+                        filled += 1
+            token = j.get("next_page_token")
+            if not token:
+                break
+    json.dump(log, open(path, "w"))
+    return filled
