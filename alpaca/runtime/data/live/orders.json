@@ -46,5 +46,29 @@
 "status": "missed",
 "note": "entry 277 min old when first seen"
 }
+},
+"daily-100-261012-C779-4317": {
+"bot": "daily",
+"cap": 100,
+"symbol": "SPY261012C00779000",
+"day": "2026-10-12",
+"sim_in": 0.36,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 143 min old when first seen"
+}
+},
+"daily-500-261012-C779-4317": {
+"bot": "daily",
+"cap": 500,
+"symbol": "SPY261012C00779000",
+"day": "2026-10-12",
+"sim_in": 0.36,
+"qty": 8,
+"buy": {
+"status": "missed",
+"note": "entry 143 min old when first seen"
+}
 }
 }
