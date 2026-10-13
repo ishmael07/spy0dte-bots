@@ -98,5 +98,117 @@
 "fill": 0.65,
 "filled_qty": 4
 }
+},
+"sniper-100-261013-P775-4314": {
+"bot": "sniper",
+"cap": 100,
+"symbol": "SPY261013P00775000",
+"day": "2026-10-13",
+"sim_in": 0.43,
+"qty": 1,
+"buy": {
+"id": "831711e4-9f53-4864-8575-6ae71fd13cd0",
+"status": "filled",
+"fill": 0.39,
+"filled_qty": 1
+}
+},
+"sniper-500-261013-P776-4314": {
+"bot": "sniper",
+"cap": 500,
+"symbol": "SPY261013P00776000",
+"day": "2026-10-13",
+"sim_in": 0.75,
+"qty": 3,
+"buy": {
+"id": "142d609c-d114-480a-93c4-2bded33eda8c",
+"status": "filled",
+"fill": 0.7,
+"filled_qty": 3
+}
+},
+"sniper_ppp-100-261013-P775-4314": {
+"bot": "sniper_ppp",
+"cap": 100,
+"symbol": "SPY261013P00775000",
+"day": "2026-10-13",
+"sim_in": 0.43,
+"qty": 1,
+"buy": {
+"id": "6e27cbd0-bb92-4b90-aa85-ddbd118564b1",
+"status": "filled",
+"fill": 0.39,
+"filled_qty": 1
+}
+},
+"sniper_ppp-500-261013-P776-4314": {
+"bot": "sniper_ppp",
+"cap": 500,
+"symbol": "SPY261013P00776000",
+"day": "2026-10-13",
+"sim_in": 0.75,
+"qty": 3,
+"buy": {
+"id": "9632d396-2f56-481b-9b7f-7dba1f95bd70",
+"status": "filled",
+"fill": 0.7,
+"filled_qty": 3
+}
+},
+"sniper4-100-261013-P775-4314": {
+"bot": "sniper4",
+"cap": 100,
+"symbol": "SPY261013P00775000",
+"day": "2026-10-13",
+"sim_in": 0.43,
+"qty": 1,
+"buy": {
+"id": "b9ffb569-194d-48d1-9562-86f535292467",
+"status": "filled",
+"fill": 0.39,
+"filled_qty": 1
+}
+},
+"sniper4-500-261013-P776-4314": {
+"bot": "sniper4",
+"cap": 500,
+"symbol": "SPY261013P00776000",
+"day": "2026-10-13",
+"sim_in": 0.75,
+"qty": 3,
+"buy": {
+"id": "98145a6b-21c1-4f80-9ffc-e48ebe492bf5",
+"status": "filled",
+"fill": 0.7,
+"filled_qty": 3
+}
+},
+"combined-100-261013-P775-4314": {
+"bot": "combined",
+"cap": 100,
+"symbol": "SPY261013P00775000",
+"day": "2026-10-13",
+"sim_in": 0.43,
+"qty": 1,
+"buy": {
+"id": "984f669d-9b1b-4a79-ac86-9c9e1f2301bb",
+"status": "filled",
+"fill": 0.39,
+"filled_qty": 1
+}
+},
+"combined-500-261013-P776-4314": {
+"bot": "combined",
+"cap": 500,
+"symbol": "SPY261013P00776000",
+"day": "2026-10-13",
+"sim_in": 0.75,
+"qty": 3,
+"buy": {
+"id": "925bf8aa-4967-47d7-b821-105cd8168330",
+"status": "filled",
+"fill": 0.71,
+"filled_qty": 3
+}
 }
 }
