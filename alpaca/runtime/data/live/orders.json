@@ -139,7 +139,15 @@
 "status": "filled",
 "fill": 0.39,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "731a3187-8bfb-48fa-af28-fed7160f7080",
+"status": "filled",
+"fill": 0.19,
+"filled_qty": 1
+},
+"sim_out": 0.21,
+"pnl": -20.0
 },
 "sniper_ppp-500-261013-P776-4314": {
 "bot": "sniper_ppp",
@@ -153,7 +161,15 @@
 "status": "filled",
 "fill": 0.7,
 "filled_qty": 3
-}
+},
+"sell": {
+"id": "5fdabc6b-7852-450d-a889-45a27026056c",
+"status": "filled",
+"fill": 0.4,
+"filled_qty": 3
+},
+"sim_out": 0.49,
+"pnl": -90.0
 },
 "sniper4-100-261013-P775-4314": {
 "bot": "sniper4",
@@ -167,7 +183,15 @@
 "status": "filled",
 "fill": 0.39,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "e31f8df9-27d0-486f-a97f-2ac248084768",
+"status": "filled",
+"fill": 0.19,
+"filled_qty": 1
+},
+"sim_out": 0.21,
+"pnl": -20.0
 },
 "sniper4-500-261013-P776-4314": {
 "bot": "sniper4",
@@ -181,7 +205,15 @@
 "status": "filled",
 "fill": 0.7,
 "filled_qty": 3
-}
+},
+"sell": {
+"id": "d3c050e0-781e-455d-aa4e-b6b2cea97076",
+"status": "filled",
+"fill": 0.4,
+"filled_qty": 3
+},
+"sim_out": 0.49,
+"pnl": -90.0
 },
 "combined-100-261013-P775-4314": {
 "bot": "combined",
@@ -195,7 +227,15 @@
 "status": "filled",
 "fill": 0.39,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "978e4921-697e-4bfe-9966-d86bc6599502",
+"status": "filled",
+"fill": 0.19,
+"filled_qty": 1
+},
+"sim_out": 0.21,
+"pnl": -20.0
 },
 "combined-500-261013-P776-4314": {
 "bot": "combined",
@@ -209,6 +249,14 @@
 "status": "filled",
 "fill": 0.71,
 "filled_qty": 3
-}
+},
+"sell": {
+"id": "32f065e0-57b0-40b0-93bc-e78150ad4ad3",
+"status": "filled",
+"fill": 0.4,
+"filled_qty": 3
+},
+"sim_out": 0.49,
+"pnl": -93.0
 }
 }
