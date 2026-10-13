@@ -27,6 +27,8 @@ jobs:
     timeout-minutes: 355
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main          # latest state (orders, quotes) from the job before, not the trigger-time commit
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
