@@ -290,5 +290,125 @@
 },
 "sim_out": 0.49,
 "pnl": -93.0
+},
+"sniper-100-261014-P770-4296": {
+"bot": "sniper",
+"cap": 100,
+"symbol": "SPY261014P00770000",
+"day": "2026-10-14",
+"sim_in": 0.35,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 33 min old when first seen"
+}
+},
+"sniper-500-261014-P773-4296": {
+"bot": "sniper",
+"cap": 500,
+"symbol": "SPY261014P00773000",
+"day": "2026-10-14",
+"sim_in": 1.14,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 33 min old when first seen"
+}
+},
+"sniper_ppp-100-261014-P770-4296": {
+"bot": "sniper_ppp",
+"cap": 100,
+"symbol": "SPY261014P00770000",
+"day": "2026-10-14",
+"sim_in": 0.35,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 33 min old when first seen"
+}
+},
+"sniper_ppp-500-261014-P773-4296": {
+"bot": "sniper_ppp",
+"cap": 500,
+"symbol": "SPY261014P00773000",
+"day": "2026-10-14",
+"sim_in": 1.14,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 33 min old when first seen"
+}
+},
+"sniper4-100-261014-P770-4296": {
+"bot": "sniper4",
+"cap": 100,
+"symbol": "SPY261014P00770000",
+"day": "2026-10-14",
+"sim_in": 0.35,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 33 min old when first seen"
+}
+},
+"sniper4-500-261014-P773-4296": {
+"bot": "sniper4",
+"cap": 500,
+"symbol": "SPY261014P00773000",
+"day": "2026-10-14",
+"sim_in": 1.14,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 33 min old when first seen"
+}
+},
+"combined-100-261014-P770-4296": {
+"bot": "combined",
+"cap": 100,
+"symbol": "SPY261014P00770000",
+"day": "2026-10-14",
+"sim_in": 0.35,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 33 min old when first seen"
+}
+},
+"combined-500-261014-P773-4296": {
+"bot": "combined",
+"cap": 500,
+"symbol": "SPY261014P00773000",
+"day": "2026-10-14",
+"sim_in": 1.14,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 33 min old when first seen"
+}
+},
+"daily-100-261014-P772-4291": {
+"bot": "daily",
+"cap": 100,
+"symbol": "SPY261014P00772000",
+"day": "2026-10-14",
+"sim_in": 0.4,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 58 min old when first seen"
+}
+},
+"daily-500-261014-P775-4291": {
+"bot": "daily",
+"cap": 500,
+"symbol": "SPY261014P00775000",
+"day": "2026-10-14",
+"sim_in": 1.34,
+"qty": 2,
+"buy": {
+"status": "missed",
+"note": "entry 58 min old when first seen"
+}
 }
 }
