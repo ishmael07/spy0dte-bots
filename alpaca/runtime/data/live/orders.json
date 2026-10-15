@@ -410,5 +410,149 @@
 "status": "missed",
 "note": "entry 58 min old when first seen"
 }
+},
+"sniper-100-261015-P760-4291": {
+"bot": "sniper",
+"cap": 100,
+"symbol": "SPY261015P00760000",
+"day": "2026-10-15",
+"sim_in": 0.45,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 224 min old when first seen"
+}
+},
+"sniper-500-261015-P766-4291": {
+"bot": "sniper",
+"cap": 500,
+"symbol": "SPY261015P00766000",
+"day": "2026-10-15",
+"sim_in": 2.09,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 224 min old when first seen"
+}
+},
+"sniper_ppp-100-261015-P758-4291": {
+"bot": "sniper_ppp",
+"cap": 100,
+"symbol": "SPY261015P00758000",
+"day": "2026-10-15",
+"sim_in": 0.28,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 224 min old when first seen"
+}
+},
+"sniper_ppp-100-261015-P758-4296": {
+"bot": "sniper_ppp",
+"cap": 100,
+"symbol": "SPY261015P00758000",
+"day": "2026-10-15",
+"sim_in": 0.25,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 199 min old when first seen"
+}
+},
+"sniper_ppp-500-261015-P765-4291": {
+"bot": "sniper_ppp",
+"cap": 500,
+"symbol": "SPY261015P00765000",
+"day": "2026-10-15",
+"sim_in": 1.64,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 224 min old when first seen"
+}
+},
+"sniper_ppp-500-261015-P765-4296": {
+"bot": "sniper_ppp",
+"cap": 500,
+"symbol": "SPY261015P00765000",
+"day": "2026-10-15",
+"sim_in": 1.56,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 199 min old when first seen"
+}
+},
+"sniper4-100-261015-P758-4291": {
+"bot": "sniper4",
+"cap": 100,
+"symbol": "SPY261015P00758000",
+"day": "2026-10-15",
+"sim_in": 0.28,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 224 min old when first seen"
+}
+},
+"sniper4-500-261015-P765-4291": {
+"bot": "sniper4",
+"cap": 500,
+"symbol": "SPY261015P00765000",
+"day": "2026-10-15",
+"sim_in": 1.64,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 224 min old when first seen"
+}
+},
+"combined-100-261015-P758-4291": {
+"bot": "combined",
+"cap": 100,
+"symbol": "SPY261015P00758000",
+"day": "2026-10-15",
+"sim_in": 0.28,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 224 min old when first seen"
+}
+},
+"combined-500-261015-P765-4291": {
+"bot": "combined",
+"cap": 500,
+"symbol": "SPY261015P00765000",
+"day": "2026-10-15",
+"sim_in": 1.64,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 224 min old when first seen"
+}
+},
+"daily-100-261015-P759-4291": {
+"bot": "daily",
+"cap": 100,
+"symbol": "SPY261015P00759000",
+"day": "2026-10-15",
+"sim_in": 0.35,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 224 min old when first seen"
+}
+},
+"daily-500-261015-P766-4291": {
+"bot": "daily",
+"cap": 500,
+"symbol": "SPY261015P00766000",
+"day": "2026-10-15",
+"sim_in": 2.09,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 224 min old when first seen"
+}
 }
 }
