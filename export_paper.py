@@ -12,6 +12,9 @@ ET = ZoneInfo("America/New_York")
 URL_NOTE = "Paper money only · fills at real Robinhood option minute prices where available (+$0.02 slippage/side, $0.03/contract fees)"
 
 
+LIVE_URL = "https://api.github.com/repos/ishmael07/spy0dte-bots/contents/live.json?ref=live"   # pushed every minute by alpaca/run.py
+
+
 def ts(t):
     return int(t.timestamp() + t.tz_convert(ET).utcoffset().total_seconds())
 
@@ -139,8 +142,23 @@ def main():
             r["a"] = rp["table"].get(r["key"], r["a"])
             r["worst"] = min(r["worst"], rp["worst"].get(r["key"], 0))
         days = rp["days"] + [d for d in days if d not in rp["days"]]
+    # today's session for the live view (run.py adds fresh quotes + Alpaca positions and pushes it every minute)
+    if phase_days["live"]:
+        today = phase_days["live"][-1]
+        g = m1[m1.day == today]
+        keep = ("side", "strike", "qty", "addQty", "addPx", "tIn", "tOut", "optIn", "optOut", "pnl", "pct", "reason", "open",
+                "spyIn", "spyOut", "stopLvl", "alpaca", "path", "kind", "bot", "tier")
+        live = dict(day=today, marketOpen=market_open, names={k: v[0] for k, v in BOTS.items()}, trades=[],
+                    spy=[[ts(t), round(float(o), 2), round(float(h), 2), round(float(l), 2), round(float(c), 2)]
+                         for t, o, h, l, c in zip(g.t, g.open, g.high, g.low, g.close)])
+        for key in BOTS:
+            for cap in (100, 500):
+                for x in runs.get(f"{key}|live|{cap}|half", {}).get("trades", []):
+                    if x["day"] == today:
+                        live["trades"].append(dict({q: x.get(q) for q in keep}, key=key, cap=cap))
+        json.dump(live, open("data/live/live_today.json", "w"), separators=(",", ":"))
     accounts = json.load(open("data/live/accounts.json")) if os.path.exists("data/live/accounts.json") else {}
-    data = dict(paper=True, marketOpen=market_open, accounts=accounts, liveStart=pd.Timestamp(start).strftime("%a %b %-d") if start else "",
+    data = dict(paper=True, marketOpen=market_open, liveUrl=LIVE_URL, accounts=accounts, liveStart=pd.Timestamp(start).strftime("%a %b %-d") if start else "",
                 updated=(last_bar_et + pd.Timedelta(minutes=1)).strftime("%a %-I:%M %p") if last_bar_et is not None and start and last_day >= start else "", days=days, days1=days, chart=chart, chart1=chart1, periods=phases, capitals=[100, 500],
                 sizing=list(SIZING), names={k: v[0] for k, v in BOTS.items()}, runs=runs, table=table,
                 tf={k: (1 if k in ("sniped1", "combined") else 5) for k in BOTS}, periodsBy={k: phases for k in BOTS},
@@ -152,7 +170,7 @@ def main():
     open("web/paper_artifact.html", "w").write(page)
     head = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
-            + ('<meta http-equiv="refresh" content="60">' if market_open else '') +
+            + ('<meta http-equiv="refresh" content="900">' if market_open else '') +
             '<style>body{margin:0}</style></head><body>\n')
     open("web/paper.html", "w").write(head + page + "\n</body></html>")
     print("phases", phases, {p: phase_days[p] for p in phases}, f"page {len(page) / 1e6:.2f} MB")

@@ -23,6 +23,7 @@ from pricing import DayModel, bs
 from sniper import signal_rows
 from sniper3 import RUNNER, SCALP, plan
 from sniper4 import account as s4_account
+import time_bot
 from sniped1 import SNIPED1, OneMin
 from sniperpp import CHECKS, Trader, select
 from combined import Combined
@@ -40,6 +41,7 @@ BOTS = {
     "sniper_pp_scalp": ("Sniper++ scalp", "sniper_plus", dict(stop=0.75, be=0.75, prove=None, half=False, tp=1.5, cap=4, trail=False)),
     "sniper_ppp": ("Sniper+++", "ppp", None),
     "sniper4": ("Sniper4", "s4", "s4"),
+    "time": ("Time", "time", "time"),
     "sniped1": ("Sniped1", "s1", "s1"),
     "combined": ("CombinedBot", "cb", "cb"),
     "daily": ("Every day", "daily7", NEW_EXIT),
@@ -186,6 +188,8 @@ def run_bot(key, T, S1, CB, ev, days, capital, size, rule="none"):
         C = SNIPED1
         return S1.run(C["family"], C["confirm"], C["window"], C["exit"], C["max_day"], C["rule"],
                       [d for d in S1.days if d in set(days)], frac=frac, capital=capital, detail=True, acct_rule=rule, sessions=sess)
+    if mode == "time":
+        return [x for x in time_bot.run(T, ev, days, capital, frac, detail=True, acct_rule=rule, sessions=sess)[0] if not x.get("skipped")]
     if mode == "s4":
         return [x for x in s4_account(T, ev, set(days), capital, frac, detail=True, acct_rule=rule, sessions=sess)[0] if not x.get("skipped")]
     A = Account(capital, rule, sess)

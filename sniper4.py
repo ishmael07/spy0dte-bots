@@ -141,6 +141,6 @@ def account(T, ev, days, capital, frac, cfg=SNIPER4, detail=False, acct_rule="no
         out.append(x)
         busy[r.day] = r.i + x["held"]
         cnt[r.day] = cnt.get(r.day, 0) + 1
-        if cash < 20:
+        if frac is not None and cash < 20:
             break
     return out, cash

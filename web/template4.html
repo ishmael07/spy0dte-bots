@@ -185,6 +185,25 @@ tr.pick td { font-weight: 600; }
 .acct { display: grid; gap: 2px; padding: 8px 12px; border-radius: 8px; background: var(--grid); min-width: 180px; }
 .acct span { font: 400 11px var(--f-num); color: var(--muted); }
 .acct b { font: 500 15px var(--f-num); }
+/* live view */
+.lstat { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 12px; }
+#lSpy { color: var(--fg); font-weight: 500; }
+.lgrid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; }
+@media (max-width: 900px) { .lgrid { grid-template-columns: 1fr; } }
+#lpx { height: 400px; }
+.lpos { border-left: 1px solid var(--line); padding: 12px; display: grid; gap: 8px; align-content: start; max-height: 420px; overflow-y: auto; }
+@media (max-width: 900px) { .lpos { border-left: 0; border-top: 1px solid var(--line); max-height: none; } }
+.lcard { text-align: left; font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; display: grid; gap: 6px; cursor: pointer; }
+.lcard:hover { border-color: var(--faint); }
+.lcard.sel { border-color: var(--fg); }
+.lcard .r1 { display: flex; align-items: center; gap: 6px; font: 600 14px var(--f-ui); }
+.lcard .r1 .q { font: 400 12px var(--f-num); color: var(--muted); }
+.lcard .pl { margin-left: auto; font: 600 16px var(--f-num); }
+.lcard .bots { font: 400 12px var(--f-ui); color: var(--muted); }
+.lcard .r3 { display: flex; justify-content: space-between; gap: 8px; font: 400 12px var(--f-num); color: var(--muted); }
+.lcard .r3 b { color: var(--fg); font-weight: 500; }
+.ltag { font: 600 9px var(--f-ui); letter-spacing: .08em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: var(--grid); color: var(--muted); }
+.ltag.open { background: var(--up-bg); color: var(--up); }
 [hidden] { display: none !important; }
 </style>
 
@@ -199,6 +218,14 @@ tr.pick td { font-weight: 600; }
       <div class="seg" id="segAcct" role="group" aria-label="Account rules" hidden></div>
     </div>
   </header>
+
+  <section class="panel livep" id="livep" hidden>
+    <div class="ph"><h2>Live · today</h2><div class="lstat"><span class="live" id="lDot"><i></i><span class="num" id="lSpy"></span></span><span class="num mut" id="lUpd"></span></div></div>
+    <div class="lgrid">
+      <div style="min-width:0"><div class="pxwrap" style="margin:8px 4px 6px"><div class="hud" id="lHud"></div><div id="lpx"></div></div></div>
+      <aside class="lpos" id="lpos"></aside>
+    </div>
+  </section>
 
   <section class="kpis" id="kpis"></section>
 
@@ -266,7 +293,7 @@ const hhmm = (ts) => new Date(ts * 1000).toISOString().slice(11, 16);
 const dayLong = (d) => new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 const dayShort = (d) => new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 const SZ = { all: "All-in", half: "50% per trade", quarter: "25% per trade" };
-const WHY = { OPEN: "Still open · marked to market", TARGET: "Target hit", "TIME LIMIT": "Time limit", STOP: "Stop hit", BREAKEVEN: "Breakeven stop", "NO FOLLOW-THROUGH": "No follow-through", "TREND FLIP": "5m trend flipped", "2H CAP": "2-hour limit", "3:45 EXIT": "3:45 close" };
+const WHY = { OPEN: "Still open · marked to market", TARGET: "Target hit", "TIME LIMIT": "Time limit", STOP: "Stop hit", BREAKEVEN: "Breakeven stop", "NO FOLLOW-THROUGH": "No follow-through", "TREND FLIP": "5m trend flipped", "2H CAP": "2-hour limit", "3:45 EXIT": "3:45 close", "LOCK PROFIT": "Locked in profit", "MOMENTUM FADE": "Momentum faded", STALLED: "Stalled · decay", THETA: "Late-day decay" };
 
 const store = (() => { try { return JSON.parse(localStorage.getItem("spy0dte-sniper2") || "{}"); } catch { return {}; } })();
 const state = {
@@ -288,7 +315,7 @@ const chartOf = (day, t) => (ttf(t) === 1 ? D.chart1[day] : D.chart[day]);
 const startDay = () => (D.paper ? D.phaseDays[state.period][0] : tf() === 1 ? D.days1[0] : D.days[D.days.length - state.period]);
 const trades = () => run().trades.filter((t) => !t.skipped);
 
-const setRange = () => { $("range").textContent = D.paper ? `${D.periodLabels[state.period]} · ${D.phaseDays[state.period].length ? dayShort(D.phaseDays[state.period][0]) + " – " + dayShort(D.phaseDays[state.period].at(-1)) : "starts at the next open"} · paper money · no real orders` : `${dayShort(startDay())} – ${dayShort(D.days.at(-1))} · ${state.period} sessions · buys calls/puts only · ${state.rule === "sniper_ppp" ? "up to 2 trades/day" : state.rule === "sniper4" ? "1 trade/day · adds to winners" : state.rule === "sniped1" ? "1m scalps · up to 3/day · adds to winners" : state.rule === "combined" ? "Sniper4 runners + Sniped1 scalps · one account" : "1 trade/day max"}`; };
+const setRange = () => { $("range").textContent = D.paper ? `${D.periodLabels[state.period]} · ${D.phaseDays[state.period].length ? dayShort(D.phaseDays[state.period][0]) + " – " + dayShort(D.phaseDays[state.period].at(-1)) : "starts at the next open"} · paper money · no real orders` : `${dayShort(startDay())} – ${dayShort(D.days.at(-1))} · ${state.period} sessions · buys calls/puts only · ${state.rule === "sniper_ppp" ? "up to 2 trades/day" : state.rule === "sniper4" ? "1 trade/day · adds to winners" : state.rule === "time" ? "1 trade/day · adds to winners · exits on its own read, no clock" : state.rule === "sniped1" ? "1m scalps · up to 3/day · adds to winners" : state.rule === "combined" ? "Sniper4 runners + Sniped1 scalps · one account" : "1 trade/day max"}`; };
 
 function seg(el, items, cur, onPick) {
   el.innerHTML = "";
@@ -422,7 +449,7 @@ function renderTrade() {
     <div class="leg"><span class="lbl">Buy</span><span class="tm">${hhmm(t.tIn)}</span><span class="px">$${t.optIn.toFixed(2)}</span><span class="sub">SPY ${t.spyIn.toFixed(2)}</span></div>
     <div class="leg"><span class="lbl">Sell</span><span class="tm">${hhmm(t.tOut)}</span><span class="px">$${t.optOut.toFixed(2)}</span><span class="sub">SPY ${t.spyOut.toFixed(2)} · ${WHY[t.reason] || t.reason}</span></div>
     <dl class="rows"><dt>Held</dt><dd>${held} min</dd><dt>Stop (SPY)</dt><dd>${t.stopLvl.toFixed(2)}</dd><dt>Volume</dt><dd>${t.vol.toFixed(2)}× avg</dd>${t.half ? "<dt>Half sold</dt><dd>at +1.5 ATR</dd>" : ""}${t.addQty ? `<dt>Added</dt><dd>×${t.addQty} @ $${t.addPx.toFixed(2)}</dd>` : ""}<dt>Balance after</dt><dd>${money(t.eq)}</dd>${t.alpaca ? `<dt>Alpaca fills</dt><dd>${t.alpaca.buy != null ? "$" + t.alpaca.buy.toFixed(2) : "…"} → ${t.alpaca.sell != null ? "$" + t.alpaca.sell.toFixed(2) : (t.open ? "open" : "…")}</dd>${t.alpaca.pnl != null ? `<dt>Alpaca P&amp;L</dt><dd class="${cls(t.alpaca.pnl)}">${sgnUsd(t.alpaca.pnl)}</dd>` : ""}` : ""}</dl>
-    <div class="checks">${D.paper ? `<span class="chk" style="${t.fills === "real" ? "" : "background:var(--grid);color:var(--muted)"}">${t.fills === "real" ? "real option prices" : "modeled prices"}</span>` : ""}${t.kind ? `<span class="chk">${({ runner: "runner · Sniper+ setup", ride: "ride · Sniper+ setup", scalp: "scalp · Sniper setup", pullback1m: "1m pullback · 5m/15m/1h/50-day ✓" })[t.kind]}</span>` : ""}${["sniper_ppp", "sniper4", "sniped1", "combined"].includes(state.rule) ? "" : state.rule === "daily" ? `<span class="chk">quality ${t.score}/10</span>` : '<span class="chk">5m ✓</span><span class="chk">15m ✓</span><span class="chk">1h ✓</span><span class="chk">vol ✓</span>' + (state.rule !== "sniper" ? '<span class="chk">50-day ✓</span>' : "") + (state.rule.endsWith("scalp") ? '<span class="chk">scalp</span>' : "")}</div>`;
+    <div class="checks">${D.paper ? `<span class="chk" style="${t.fills === "real" ? "" : "background:var(--grid);color:var(--muted)"}">${t.fills === "real" ? "real option prices" : "modeled prices"}</span>` : ""}${t.kind ? `<span class="chk">${({ runner: "runner · Sniper+ setup", ride: "ride · Sniper+ setup", scalp: "scalp · Sniper setup", time_ride: "ride · no clock · Sniper+ setup", scalp_open: "scalp · no clock · Sniper setup", pullback1m: "1m pullback · 5m/15m/1h/50-day ✓" })[t.kind]}</span>` : ""}${["sniper_ppp", "sniper4", "time", "sniped1", "combined"].includes(state.rule) ? "" : state.rule === "daily" ? `<span class="chk">quality ${t.score}/10</span>` : '<span class="chk">5m ✓</span><span class="chk">15m ✓</span><span class="chk">1h ✓</span><span class="chk">vol ✓</span>' + (state.rule !== "sniper" ? '<span class="chk">50-day ✓</span>' : "") + (state.rule.endsWith("scalp") ? '<span class="chk">scalp</span>' : "")}</div>`;
   renderHud(null);
   renderEquity();
 }
@@ -523,7 +550,7 @@ function renderBoard() {
   }
 }
 
-function update() { save(); setRange(); renderBoard(); renderControls(); renderKpis(); renderTrade(); renderTable(); renderCmp(); }
+function update() { save(); setRange(); renderBoard(); renderControls(); renderKpis(); renderTrade(); renderTable(); renderCmp(); if (LV.d) renderLive(); }
 
 $("prevT").onclick = () => { if (state.k > 0) { state.k--; renderTrade(); renderTable(); } };
 $("nextT").onclick = () => { if (state.k < trades().length - 1) { state.k++; renderTrade(); renderTable(); } };
@@ -531,8 +558,97 @@ document.addEventListener("keydown", (e) => { if (e.key === "ArrowLeft") $("prev
 $("footL").textContent = D.paper ? D.footer : `Real Robinhood SPY bars · real 0DTE daily OHLC per strike, intraday fills modeled (±${D.validation.mape}%) · strategies designed on ${dayShort(D.designStart)} onward · earlier days were never used to design them`;
 $("footR").textContent = "Fills +$0.02 slippage/side · $0.03/contract fees";
 
-function rebuild() { buildCharts(); renderCmp(); update(); }
+
+// ---------------------------------------------------------------- live view (paper mode)
+// live.json is pushed by the bot runner every minute to the repo's `live` branch; read via the GitHub contents API
+// (60 requests/hour per visitor, so poll ~every 70 s; unchanged responses come back 304 and don't count).
+const LV = { d: null, focus: null, timer: null, chart: null, cand: null, marks: null, lines: [], note: "" };
+const etNow = () => { const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short", hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(new Date()).map((x) => [x.type, x.value])); return { wd: p.weekday, hm: +p.hour * 100 + +p.minute }; };
+const sessionHours = () => { const n = etNow(); return !["Sat", "Sun"].includes(n.wd) && n.hm >= 920 && n.hm < 1605; };
+function liveGroups() {
+  if (!LV.d) return [];
+  const g = new Map();
+  for (const t of LV.d.trades.filter((x) => x.cap === state.cap)) {
+    const id = [t.side, t.strike, t.tIn, t.qty, t.optIn, t.reason, t.tOut].join("|");
+    if (!g.has(id)) g.set(id, Object.assign({ id, bots: [] }, t));
+    g.get(id).bots.push(LV.d.names[t.key] || t.key);
+  }
+  return [...g.values()].sort((a, b) => (b.open - a.open) || (b.tIn - a.tIn));
+}
+function liveBuildChart() {
+  $("lpx").innerHTML = "";
+  LV.chart = LC.createChart($("lpx"), baseOpts({ timeScale: { borderColor: css("--line"), timeVisible: true, secondsVisible: false } }));
+  LV.cand = LV.chart.addSeries(LC.CandlestickSeries, { upColor: css("--up"), downColor: css("--down"), borderVisible: false, wickUpColor: css("--up"), wickDownColor: css("--down"), priceLineVisible: true, lastValueVisible: true });
+  LV.marks = LC.createSeriesMarkers(LV.cand, []);
+  LV.lines = [];
+  if (LV.d) renderLive(true);
+}
+function renderLive(fit) {
+  const d = LV.d;
+  if (!D.paper || !d) return;
+  $("livep").hidden = false;
+  const bars = d.spy || [];
+  const last = bars.at(-1);
+  $("lSpy").textContent = last ? `SPY ${last[4].toFixed(2)}` : "SPY —";
+  $("lDot").classList.toggle("on", !!d.marketOpen);
+  LV.cand.setData(bars.map((b) => ({ time: b[0], open: b[1], high: b[2], low: b[3], close: b[4] })));
+  const times = bars.map((b) => b[0]);
+  const snap = (tt) => { if (!times.length) return tt; let best = times[0]; for (const x of times) if (Math.abs(x - tt) < Math.abs(best - tt)) best = x; return best; };
+  const groups = liveGroups();
+  if (!groups.find((g) => g.id === LV.focus)) LV.focus = groups[0]?.id || null;
+  const mk = [];
+  for (const g of groups) {
+    const on = g.id === LV.focus;
+    const col = on ? css("--fg") : css("--faint");
+    mk.push({ time: snap(g.tIn), position: g.side === "C" ? "belowBar" : "aboveBar", shape: g.side === "C" ? "arrowUp" : "arrowDown", color: on ? (g.side === "C" ? css("--up") : css("--down")) : col, text: on ? `BUY ${g.strike}${g.side} ×${g.qty}` : "" });
+    if (!g.open) mk.push({ time: snap(g.tOut - 60), position: g.side === "C" ? "aboveBar" : "belowBar", shape: "circle", color: on ? (g.pnl >= 0 ? css("--up") : css("--down")) : col, text: on ? `SELL ${sgnUsd(g.pnl)}` : "" });
+  }
+  mk.sort((a, b) => a.time - b.time);
+  LV.marks.setMarkers(mk);
+  for (const l of LV.lines) LV.cand.removePriceLine(l);
+  LV.lines = [];
+  const f = groups.find((g) => g.id === LV.focus);
+  if (f && f.open) {
+    if (f.spyIn) LV.lines.push(LV.cand.createPriceLine({ price: f.spyIn, color: css("--muted"), lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: "entry" }));
+    if (f.stopLvl) LV.lines.push(LV.cand.createPriceLine({ price: f.stopLvl, color: css("--down"), lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: "stop" }));
+  }
+  if (fit) requestAnimationFrame(() => requestAnimationFrame(() => LV.chart.timeScale().fitContent()));
+  $("lHud").innerHTML = f ? `<span><b>${f.strike}${f.side}</b> ×${f.qty + (f.addQty || 0)}</span><span>${f.open ? "now" : "closed"} <b class="${cls(f.pnl)}">${sgnUsd(f.pnl)} (${sgn(f.pct, 0)}%)</b></span>` : "";
+  const now = (g) => g.open ? (g.mark ?? g.optOut) : g.optOut;
+  const alp = (a) => !a ? "" : a.status === "missed" ? '<span class="mut">Alpaca: missed (before job start)</span>' : a.buy ? `<span>Alpaca fill <b>$${a.buy.toFixed(2)}</b>${a.sell ? ` → <b>$${a.sell.toFixed(2)}</b>` : ""}</span>` : `<span class="mut">Alpaca: ${a.status || "pending"}</span>`;
+  $("lpos").innerHTML = groups.length ? groups.map((g) => `<button class="lcard ${g.id === LV.focus ? "sel" : ""}" data-id="${g.id}">
+      <div class="r1"><span class="side ${g.side}">${g.side === "C" ? "CALL" : "PUT"}</span>${g.strike}<span class="q">×${g.qty + (g.addQty || 0)}</span><span class="pl ${cls(g.pnl)}">${sgnUsd(g.pnl)}</span></div>
+      <div class="bots">${g.bots.join(" · ")}</div>
+      <div class="r3"><span>Buy <b>${hhmm(g.tIn)}</b> @ <b>$${g.optIn.toFixed(2)}</b></span><span>${g.open ? "Now" : `Sell <b>${hhmm(g.tOut)}</b> @`} <b>$${(now(g) ?? 0).toFixed(2)}</b></span></div>
+      <div class="r3"><span class="ltag ${g.open ? "open" : ""}">${g.open ? "Open · live" : (WHY[g.reason] || g.reason)}</span><span class="${cls(g.pct)}">${sgn(g.pct, 0)}%</span></div>
+      ${g.alpaca ? `<div class="r3">${alp(g.alpaca)}</div>` : ""}
+    </button>`).join("") : `<div class="empty">No trades yet today${d.marketOpen ? " · bots are watching" : ""}.</div>`;
+  for (const el of document.querySelectorAll("#lpos .lcard")) el.onclick = () => { LV.focus = el.dataset.id; renderLive(); };
+  liveStatus();
+}
+function liveStatus(next) {
+  const d = LV.d;
+  const age = d?.pushed ? Math.round((Date.now() / 1000 - d.pushed) / 60) : null;
+  $("lUpd").textContent = LV.note || (d ? (d.marketOpen ? `updated ${age <= 0 ? "just now" : age + " min ago"}${next ? ` · next in ${Math.round(next / 1000)}s` : ""}` : `market closed · ${d.day}`) : "");
+}
+async function liveFetch() {
+  let wait = 70000;
+  try {
+    const r = await fetch(D.liveUrl, { cache: "no-cache", headers: { Accept: "application/vnd.github.raw+json" } });
+    const rem = r.headers.get("x-ratelimit-remaining"), reset = +r.headers.get("x-ratelimit-reset");
+    if (r.ok) { const first = !LV.d; LV.d = await r.json(); LV.note = ""; renderLive(first); }
+    else if (r.status === 403 || r.status === 429) { wait = Math.max(60000, reset * 1000 - Date.now() + 3000); LV.note = `live updates paused by GitHub's limit · back at ${new Date(reset * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`; }
+    else if (r.status === 404) LV.note = "live view starts with the next session";
+    if (rem !== null && +rem < 4 && reset) wait = Math.max(wait, reset * 1000 - Date.now() + 3000);
+  } catch { LV.note = "live view offline · retrying"; }
+  liveStatus(wait);
+  if (sessionHours() || LV.d?.marketOpen) LV.timer = setTimeout(liveFetch, document.hidden ? Math.max(wait, 300000) : wait);
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden && sessionHours()) { clearTimeout(LV.timer); liveFetch(); } });
+
+function rebuild() { buildCharts(); renderCmp(); update(); if (D.paper && D.liveUrl) liveBuildChart(); }
 rebuild();
+if (D.paper && D.liveUrl) liveFetch();
 matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", rebuild);
 new MutationObserver(rebuild).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 })();

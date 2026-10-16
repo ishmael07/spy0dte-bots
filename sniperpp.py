@@ -64,6 +64,7 @@ class Trader:
         self.f5 = self.sim.f5
         self.st5 = self.f5.st_trend.values
         self.atr = self.f5.atr.values
+        self.ema8 = self.f5.ema_f.values
 
     def trade(self, d, i, side, ex, budget=100.0, rule="near", detail=False):
         s = self.sim
@@ -82,6 +83,8 @@ class Trader:
         best = 0.0
         half_px, moved, add_px = None, False, None
         xi = xs = why = None
+        ad = ex.get("adaptive")             # Time bot: exits decided by the trade itself (see time_bot.py)
+        peak_v, last_hi, ema8 = fill, ei, self.ema8
         for j in range(ei, b + n):
             fav = (h[j] - ref) if k == 1 else (ref - l[j])
             best = max(best, fav / atr)
@@ -98,13 +101,28 @@ class Trader:
                 half_px = max(dm.price(key, j - b, float(ref + k * ex["half_atr"] * atr)) - lab2.SLIP, 0.0)
                 if ex.get("be_on_half"):
                     stop, moved = ref, True
+            if ad:
+                v = dm.raw_price(key, j - b, float(c[j]))          # what the contract is worth at this bar's close
+                if v > peak_v:
+                    peak_v, last_hi = v, j
+                gain, pk = v / fill - 1, peak_v / fill - 1
+                if ad.get("lock") and pk >= ad["lock"][0] and v <= fill + (peak_v - fill) * (1 - ad["lock"][1]):
+                    xi, xs, why = j, c[j], "LOCK PROFIT"; break       # gave back too much of the peak gain
+                if ad.get("fade") is not None and gain >= ad["fade"] and (c[j] - ema8[j]) * k < 0:
+                    xi, xs, why = j, c[j], "MOMENTUM FADE"; break     # 5m close back through EMA 8 while green
+                if ad.get("stall"):
+                    n_ = ad["stall"][0] if hm[j] < 1300 else ad["stall"][1]   # afternoon theta → less patience
+                    if j - last_hi >= n_ and gain < ad["stall"][2]:
+                        xi, xs, why = j, c[j], "STALLED"; break       # no new high for n bars: decay is winning
+                if ad.get("late") and hm[j] >= ad["late"][0] and gain < ad["late"][1]:
+                    xi, xs, why = j, c[j], "THETA"; break
             if ex.get("tp") and best >= ex["tp"]:
                 xi, xs, why = j, ref + k * ex["tp"] * atr, "TARGET"; break
             if ex["prove"] and j - ei + 1 == ex["prove"][0] and best < ex["prove"][1]:
                 xi, xs, why = j, c[j], "NO FOLLOW-THROUGH"; break
             if ex.get("trail", True) and j > ei and self.st5[j] == -k:
                 xi = min(j + 1, b + n - 1); xs, why = o[xi], "TREND FLIP"; break
-            if j - ei + 1 >= ex.get("cap", 24):
+            if ex.get("cap", 24) and j - ei + 1 >= ex.get("cap", 24):
                 xi, xs, why = j, c[j], ("2H CAP" if ex.get("cap", 24) == 24 else "TIME LIMIT"); break
             if hm[j] >= FLAT_AT or j == b + n - 1:
                 xi, xs, why = j, c[j], "3:45 EXIT"; break

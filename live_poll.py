@@ -21,7 +21,7 @@ if "--summary-only" not in sys.argv:
 
 R = pd.read_pickle("data/paper_results.pkl")
 names = {"sniper": "Sniper", "sniper_plus": "Sniper+", "sniper_pp": "Sniper++", "sniper_plus_scalp": "Sniper+ scalp",
-         "sniper_pp_scalp": "Sniper++ scalp", "sniper_ppp": "Sniper+++", "sniper4": "Sniper4", "sniped1": "Sniped1",
+         "sniper_pp_scalp": "Sniper++ scalp", "sniper_ppp": "Sniper+++", "sniper4": "Sniper4", "time": "Time", "sniped1": "Sniped1",
          "combined": "CombinedBot", "daily": "Every day"}
 snap, lines = {}, []
 for key, name in names.items():

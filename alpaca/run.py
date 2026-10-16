@@ -20,7 +20,7 @@ from zoneinfo import ZoneInfo
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RUNTIME = os.path.join(ROOT, "alpaca", "runtime")
 sys.path.insert(0, ROOT)
-from alpaca import feed, orders  # noqa: E402
+from alpaca import feed, live_feed, orders  # noqa: E402
 
 ET = ZoneInfo("America/New_York")
 START = "2026-10-09"
@@ -96,7 +96,7 @@ def engine(start, H=None, today=None, trade=False):
     return "\n".join(order_log + [out.stdout.strip()])
 
 
-def poll(H, today, start, trade=False):
+def poll(H, today, start, trade=False, live=False):
     bars = feed.refresh_today(H, today)
     if not bars:
         return "no bars yet"
@@ -104,6 +104,13 @@ def poll(H, today, start, trade=False):
     n = feed.record_quotes(H, today, spot)
     t = time.time()
     summary = engine(start, H, today, trade)
+    if live:
+        try:
+            L = live_feed.build(H, today)
+            ok = L is not None and live_feed.push(ROOT, L)
+            summary += f"\nlive view {'pushed' if ok else 'not pushed'}"
+        except Exception as e:
+            summary += f"\nlive view error {e!r}"
     return f"SPY {spot:.2f} · {n} quotes · engine {time.time() - t:.1f}s\n{summary}"
 
 
@@ -137,7 +144,7 @@ def main():
                     print("backfill error:", repr(e), flush=True)
         if c["is_open"]:
             try:
-                print(now.strftime("%H:%M:%S"), poll(H, today, a.start, a.orders), flush=True)
+                print(now.strftime("%H:%M:%S"), poll(H, today, a.start, a.orders, live=bool(a.publish_every)), flush=True)
                 polls += 1
                 if a.publish_every and polls % a.publish_every == 0:
                     publish(f"paper poll {today} {now.strftime('%H:%M')} ET")
