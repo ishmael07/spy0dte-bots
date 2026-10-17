@@ -131,7 +131,7 @@ def account(T, ev, days, capital, frac, cfg=SNIPER4, detail=False, acct_rule="no
             if detail:
                 out.append(dict(day=r.day, side=r.side, skipped=True, eq=round(cash, 2)))
             continue
-        x.update(tier=t, kind=(cfg["exit"]["A"] if t == "A" else "scalp"))
+        x.update(tier=t, kind=cfg["exit"][t])
         if frac is None:
             cash += x["pnl"]
         else:

@@ -193,17 +193,35 @@ tr.pick td { font-weight: 600; }
 #lpx { height: 400px; }
 .lpos { border-left: 1px solid var(--line); padding: 12px; display: grid; gap: 8px; align-content: start; max-height: 420px; overflow-y: auto; }
 @media (max-width: 900px) { .lpos { border-left: 0; border-top: 1px solid var(--line); max-height: none; } }
-.lcard { text-align: left; font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; display: grid; gap: 6px; cursor: pointer; }
+.lcard { text-align: left; font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; display: grid; gap: 7px; cursor: pointer; }
 .lcard:hover { border-color: var(--faint); }
-.lcard.sel { border-color: var(--fg); }
-.lcard .r1 { display: flex; align-items: center; gap: 6px; font: 600 14px var(--f-ui); }
-.lcard .r1 .q { font: 400 12px var(--f-num); color: var(--muted); }
-.lcard .pl { margin-left: auto; font: 600 16px var(--f-num); }
-.lcard .bots { font: 400 12px var(--f-ui); color: var(--muted); }
-.lcard .r3 { display: flex; justify-content: space-between; gap: 8px; font: 400 12px var(--f-num); color: var(--muted); }
+.lcard.sel { border-color: var(--fg); box-shadow: inset 0 0 0 1px var(--fg); }
+.lcard .r1 { display: flex; align-items: center; gap: 8px; }
+.lcard .who { font: 600 14px var(--f-ui); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lcard .who span { font-weight: 400; color: var(--muted); }
+.lcard .pl { margin-left: auto; font: 600 16px var(--f-num); white-space: nowrap; }
+.lcard .r2 { display: flex; align-items: center; gap: 2px; font: 500 13px var(--f-num); }
+.lcard .r2 .side { margin-right: 6px; }
+.lcard .r2 .pc { margin-left: auto; }
+.lcard .flow { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; font: 400 12px var(--f-num); color: var(--muted); }
+.lcard .flow div { display: grid; gap: 1px; }
+.lcard .flow div:last-child { text-align: right; }
+.lcard .flow b { color: var(--fg); font-weight: 500; font-size: 13px; }
+.lcard .flow i { font-style: normal; color: var(--faint); }
+.lcard .r3 { display: flex; justify-content: space-between; align-items: center; gap: 8px; font: 400 12px var(--f-num); color: var(--muted); }
 .lcard .r3 b { color: var(--fg); font-weight: 500; }
-.ltag { font: 600 9px var(--f-ui); letter-spacing: .08em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: var(--grid); color: var(--muted); }
+.tno { flex: none; display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; font: 600 11px var(--f-num); background: var(--grid); color: var(--fg); }
+.tno.win { background: var(--up-bg); color: var(--up); } .tno.loss { background: var(--down-bg); color: var(--down); } .tno.open { background: var(--fg); color: var(--panel); }
+.ltag { flex: none; white-space: nowrap; font: 600 9px var(--f-ui); letter-spacing: .08em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: var(--grid); color: var(--muted); }
 .ltag.open { background: var(--up-bg); color: var(--up); }
+.lbots { display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 14px 0; }
+.lbots button { font: 500 12px var(--f-ui); color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.lbots button:hover { color: var(--fg); }
+.lbots button[aria-pressed="true"] { color: var(--panel); background: var(--fg); border-color: var(--fg); }
+.lbots button b { font: 500 11px var(--f-num); opacity: .75; }
+.lkey { display: flex; gap: 14px; flex-wrap: wrap; padding: 0 14px 10px; font-size: 12px; color: var(--muted); }
+.lkey span { display: inline-flex; align-items: center; gap: 6px; }
+.lkey i { display: inline-block; width: 16px; height: 0; border-top: 2px solid; }
 [hidden] { display: none !important; }
 </style>
 
@@ -221,8 +239,10 @@ tr.pick td { font-weight: 600; }
 
   <section class="panel livep" id="livep" hidden>
     <div class="ph"><h2>Live · today</h2><div class="lstat"><span class="live" id="lDot"><i></i><span class="num" id="lSpy"></span></span><span class="num mut" id="lUpd"></span></div></div>
+    <div class="lbots" id="lbots" role="group" aria-label="Show trades from"></div>
     <div class="lgrid">
-      <div style="min-width:0"><div class="pxwrap" style="margin:8px 4px 6px"><div class="hud" id="lHud"></div><div id="lpx"></div></div></div>
+      <div style="min-width:0"><div class="pxwrap" style="margin:8px 4px 6px"><div class="hud" id="lHud"></div><div id="lpx"></div></div>
+        <div class="lkey"><span>▲▼ buy &nbsp;● sell, numbered to match the cards</span><span><i style="border-color:var(--up)"></i>winning trade</span><span><i style="border-color:var(--down)"></i>losing trade</span></div></div>
       <aside class="lpos" id="lpos"></aside>
     </div>
   </section>
@@ -449,7 +469,7 @@ function renderTrade() {
     <div class="leg"><span class="lbl">Buy</span><span class="tm">${hhmm(t.tIn)}</span><span class="px">$${t.optIn.toFixed(2)}</span><span class="sub">SPY ${t.spyIn.toFixed(2)}</span></div>
     <div class="leg"><span class="lbl">Sell</span><span class="tm">${hhmm(t.tOut)}</span><span class="px">$${t.optOut.toFixed(2)}</span><span class="sub">SPY ${t.spyOut.toFixed(2)} · ${WHY[t.reason] || t.reason}</span></div>
     <dl class="rows"><dt>Held</dt><dd>${held} min</dd><dt>Stop (SPY)</dt><dd>${t.stopLvl.toFixed(2)}</dd><dt>Volume</dt><dd>${t.vol.toFixed(2)}× avg</dd>${t.half ? "<dt>Half sold</dt><dd>at +1.5 ATR</dd>" : ""}${t.addQty ? `<dt>Added</dt><dd>×${t.addQty} @ $${t.addPx.toFixed(2)}</dd>` : ""}<dt>Balance after</dt><dd>${money(t.eq)}</dd>${t.alpaca ? `<dt>Alpaca fills</dt><dd>${t.alpaca.buy != null ? "$" + t.alpaca.buy.toFixed(2) : "…"} → ${t.alpaca.sell != null ? "$" + t.alpaca.sell.toFixed(2) : (t.open ? "open" : "…")}</dd>${t.alpaca.pnl != null ? `<dt>Alpaca P&amp;L</dt><dd class="${cls(t.alpaca.pnl)}">${sgnUsd(t.alpaca.pnl)}</dd>` : ""}` : ""}</dl>
-    <div class="checks">${D.paper ? `<span class="chk" style="${t.fills === "real" ? "" : "background:var(--grid);color:var(--muted)"}">${t.fills === "real" ? "real option prices" : "modeled prices"}</span>` : ""}${t.kind ? `<span class="chk">${({ runner: "runner · Sniper+ setup", ride: "ride · Sniper+ setup", scalp: "scalp · Sniper setup", time_ride: "ride · no clock · Sniper+ setup", scalp_open: "scalp · no clock · Sniper setup", pullback1m: "1m pullback · 5m/15m/1h/50-day ✓" })[t.kind]}</span>` : ""}${["sniper_ppp", "sniper4", "time", "sniped1", "combined"].includes(state.rule) ? "" : state.rule === "daily" ? `<span class="chk">quality ${t.score}/10</span>` : '<span class="chk">5m ✓</span><span class="chk">15m ✓</span><span class="chk">1h ✓</span><span class="chk">vol ✓</span>' + (state.rule !== "sniper" ? '<span class="chk">50-day ✓</span>' : "") + (state.rule.endsWith("scalp") ? '<span class="chk">scalp</span>' : "")}</div>`;
+    <div class="checks">${D.paper ? `<span class="chk" style="${t.fills === "real" ? "" : "background:var(--grid);color:var(--muted)"}">${t.fills === "real" ? "real option prices" : "modeled prices"}</span>` : ""}${t.kind ? `<span class="chk">${({ runner: "runner · Sniper+ setup", ride: "ride · Sniper+ setup", scalp: "scalp · Sniper setup", time_ride: "ride · no clock · Sniper+ setup", time_ride_b: "ride · no clock · Sniper setup", scalp_open: "scalp · no clock · Sniper setup", pullback1m: "1m pullback · 5m/15m/1h/50-day ✓" })[t.kind]}</span>` : ""}${["sniper_ppp", "sniper4", "time", "sniped1", "combined"].includes(state.rule) ? "" : state.rule === "daily" ? `<span class="chk">quality ${t.score}/10</span>` : '<span class="chk">5m ✓</span><span class="chk">15m ✓</span><span class="chk">1h ✓</span><span class="chk">vol ✓</span>' + (state.rule !== "sniper" ? '<span class="chk">50-day ✓</span>' : "") + (state.rule.endsWith("scalp") ? '<span class="chk">scalp</span>' : "")}</div>`;
   renderHud(null);
   renderEquity();
 }
@@ -562,9 +582,10 @@ $("footR").textContent = "Fills +$0.02 slippage/side · $0.03/contract fees";
 // ---------------------------------------------------------------- live view (paper mode)
 // live.json is pushed by the bot runner every minute to the repo's `live` branch; read via the GitHub contents API
 // (60 requests/hour per visitor, so poll ~every 70 s; unchanged responses come back 304 and don't count).
-const LV = { d: null, focus: null, timer: null, chart: null, cand: null, marks: null, lines: [], note: "" };
+const LV = { d: null, focus: null, bot: "", timer: null, chart: null, cand: null, marks: null, lines: [], paths: [], note: "" };
 const etNow = () => { const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short", hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(new Date()).map((x) => [x.type, x.value])); return { wd: p.weekday, hm: +p.hour * 100 + +p.minute }; };
 const sessionHours = () => { const n = etNow(); return !["Sat", "Sun"].includes(n.wd) && n.hm >= 920 && n.hm < 1605; };
+// One entry per distinct trade (bots that bought the same contract at the same moment share a card), numbered by entry time.
 function liveGroups() {
   if (!LV.d) return [];
   const g = new Map();
@@ -573,7 +594,9 @@ function liveGroups() {
     if (!g.has(id)) g.set(id, Object.assign({ id, bots: [] }, t));
     g.get(id).bots.push(LV.d.names[t.key] || t.key);
   }
-  return [...g.values()].sort((a, b) => (b.open - a.open) || (b.tIn - a.tIn));
+  const all = [...g.values()].sort((a, b) => a.tIn - b.tIn || a.strike - b.strike);
+  all.forEach((x, i) => { x.no = i + 1; });
+  return all;
 }
 function liveBuildChart() {
   $("lpx").innerHTML = "";
@@ -581,6 +604,7 @@ function liveBuildChart() {
   LV.cand = LV.chart.addSeries(LC.CandlestickSeries, { upColor: css("--up"), downColor: css("--down"), borderVisible: false, wickUpColor: css("--up"), wickDownColor: css("--down"), priceLineVisible: true, lastValueVisible: true });
   LV.marks = LC.createSeriesMarkers(LV.cand, []);
   LV.lines = [];
+  LV.paths = [];
   if (LV.d) renderLive(true);
 }
 function renderLive(fit) {
@@ -594,34 +618,60 @@ function renderLive(fit) {
   LV.cand.setData(bars.map((b) => ({ time: b[0], open: b[1], high: b[2], low: b[3], close: b[4] })));
   const times = bars.map((b) => b[0]);
   const snap = (tt) => { if (!times.length) return tt; let best = times[0]; for (const x of times) if (Math.abs(x - tt) < Math.abs(best - tt)) best = x; return best; };
-  const groups = liveGroups();
-  if (!groups.find((g) => g.id === LV.focus)) LV.focus = groups[0]?.id || null;
+  const all = liveGroups();
+  // bot filter chips: every bot that traded today at this account size
+  const count = {};
+  for (const g of all) for (const b of g.bots) count[b] = (count[b] || 0) + 1;
+  if (LV.bot && !count[LV.bot]) LV.bot = "";
+  $("lbots").hidden = !all.length;
+  $("lbots").innerHTML = [["", "All bots", all.length], ...Object.entries(count).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([b, n]) => [b, b, n])]
+    .map(([k, label, n]) => `<button data-bot="${k}" aria-pressed="${LV.bot === k}">${label}<b>${n}</b></button>`).join("");
+  for (const el of document.querySelectorAll("#lbots button")) el.onclick = () => { LV.bot = el.dataset.bot; LV.focus = null; renderLive(); };
+  const groups = all.filter((g) => !LV.bot || g.bots.includes(LV.bot));
+  if (!groups.find((g) => g.id === LV.focus)) LV.focus = (groups.find((g) => g.open) || groups.at(-1))?.id || null;
+  const pnlCol = (g) => (g.pnl >= 0 ? css("--up") : css("--down"));
   const mk = [];
   for (const g of groups) {
     const on = g.id === LV.focus;
-    const col = on ? css("--fg") : css("--faint");
-    mk.push({ time: snap(g.tIn), position: g.side === "C" ? "belowBar" : "aboveBar", shape: g.side === "C" ? "arrowUp" : "arrowDown", color: on ? (g.side === "C" ? css("--up") : css("--down")) : col, text: on ? `BUY ${g.strike}${g.side} ×${g.qty}` : "" });
-    if (!g.open) mk.push({ time: snap(g.tOut - 60), position: g.side === "C" ? "aboveBar" : "belowBar", shape: "circle", color: on ? (g.pnl >= 0 ? css("--up") : css("--down")) : col, text: on ? `SELL ${sgnUsd(g.pnl)}` : "" });
+    const call = g.side === "C";
+    mk.push({ time: snap(g.tIn), position: call ? "belowBar" : "aboveBar", shape: call ? "arrowUp" : "arrowDown", color: on ? css("--fg") : css("--faint"),
+              size: on ? 1.4 : 1, text: on ? `#${g.no} BUY ${g.strike}${g.side}` : `#${g.no}` });
+    if (!g.open) mk.push({ time: snap(g.tOut - 60), position: call ? "aboveBar" : "belowBar", shape: "circle", color: on ? pnlCol(g) : css("--faint"),
+                           size: on ? 1.2 : 0.8, text: on ? `#${g.no} SELL ${sgnUsd(g.pnl)}` : "" });
   }
   mk.sort((a, b) => a.time - b.time);
   LV.marks.setMarkers(mk);
+  // entry → exit path for every trade (SPY price at buy and at sell / now); the focused one drawn bold
+  for (const p of LV.paths) LV.chart.removeSeries(p);
+  LV.paths = [];
+  for (const g of [...groups].sort((a, b) => (a.id === LV.focus) - (b.id === LV.focus))) {
+    const t0 = snap(g.tIn), t1 = g.open ? times.at(-1) : snap(g.tOut - 60);
+    const v0 = g.spyIn, v1 = g.open ? last?.[4] : g.spyOut;
+    if (v0 == null || v1 == null || t1 == null || t1 <= t0) continue;
+    const on = g.id === LV.focus;
+    const s = LV.chart.addSeries(LC.LineSeries, { color: pnlCol(g), lineWidth: on ? 3 : 1, lineStyle: on ? 0 : 2, lastValueVisible: false, priceLineVisible: false,
+                                                   crosshairMarkerVisible: false, pointMarkersVisible: on, pointMarkersRadius: 3 });
+    s.setData([{ time: t0, value: v0 }, { time: t1, value: v1 }]);
+    LV.paths.push(s);
+  }
   for (const l of LV.lines) LV.cand.removePriceLine(l);
   LV.lines = [];
   const f = groups.find((g) => g.id === LV.focus);
   if (f && f.open) {
-    if (f.spyIn) LV.lines.push(LV.cand.createPriceLine({ price: f.spyIn, color: css("--muted"), lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: "entry" }));
-    if (f.stopLvl) LV.lines.push(LV.cand.createPriceLine({ price: f.stopLvl, color: css("--down"), lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: "stop" }));
+    if (f.spyIn) LV.lines.push(LV.cand.createPriceLine({ price: f.spyIn, color: css("--muted"), lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: `#${f.no} entry` }));
+    if (f.stopLvl) LV.lines.push(LV.cand.createPriceLine({ price: f.stopLvl, color: css("--down"), lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: `#${f.no} stop` }));
   }
   if (fit) requestAnimationFrame(() => requestAnimationFrame(() => LV.chart.timeScale().fitContent()));
-  $("lHud").innerHTML = f ? `<span><b>${f.strike}${f.side}</b> ×${f.qty + (f.addQty || 0)}</span><span>${f.open ? "now" : "closed"} <b class="${cls(f.pnl)}">${sgnUsd(f.pnl)} (${sgn(f.pct, 0)}%)</b></span>` : "";
+  $("lHud").innerHTML = f ? `<span><b>#${f.no} ${f.bots.join(" · ")}</b></span><span>${f.side === "C" ? "CALL" : "PUT"} <b>${f.strike}</b> ×${f.qty + (f.addQty || 0)}</span><span>${f.open ? "open" : "closed"} <b class="${cls(f.pnl)}">${sgnUsd(f.pnl)} (${sgn(f.pct, 0)}%)</b></span>` : "";
   const now = (g) => g.open ? (g.mark ?? g.optOut) : g.optOut;
-  const alp = (a) => !a ? "" : a.status === "missed" ? '<span class="mut">Alpaca: missed (before job start)</span>' : a.buy ? `<span>Alpaca fill <b>$${a.buy.toFixed(2)}</b>${a.sell ? ` → <b>$${a.sell.toFixed(2)}</b>` : ""}</span>` : `<span class="mut">Alpaca: ${a.status || "pending"}</span>`;
-  $("lpos").innerHTML = groups.length ? groups.map((g) => `<button class="lcard ${g.id === LV.focus ? "sel" : ""}" data-id="${g.id}">
-      <div class="r1"><span class="side ${g.side}">${g.side === "C" ? "CALL" : "PUT"}</span>${g.strike}<span class="q">×${g.qty + (g.addQty || 0)}</span><span class="pl ${cls(g.pnl)}">${sgnUsd(g.pnl)}</span></div>
-      <div class="bots">${g.bots.join(" · ")}</div>
-      <div class="r3"><span>Buy <b>${hhmm(g.tIn)}</b> @ <b>$${g.optIn.toFixed(2)}</b></span><span>${g.open ? "Now" : `Sell <b>${hhmm(g.tOut)}</b> @`} <b>$${(now(g) ?? 0).toFixed(2)}</b></span></div>
-      <div class="r3"><span class="ltag ${g.open ? "open" : ""}">${g.open ? "Open · live" : (WHY[g.reason] || g.reason)}</span><span class="${cls(g.pct)}">${sgn(g.pct, 0)}%</span></div>
-      ${g.alpaca ? `<div class="r3">${alp(g.alpaca)}</div>` : ""}
+  const alp = (a) => !a ? "" : a.status === "missed" ? '<span class="mut">Alpaca: not placed · late start</span>' : a.buy ? `<span>Alpaca fill <b>$${a.buy.toFixed(2)}</b>${a.sell ? ` → <b>$${a.sell.toFixed(2)}</b>` : ""}</span>` : `<span class="mut">Alpaca: ${a.status || "pending"}</span>`;
+  const who = (b) => b.length > 2 ? `${b[0]} <span>+${b.length - 1} more</span>` : b.join(" · ");
+  const order = [...groups].sort((a, b) => (b.open - a.open) || (b.no - a.no));
+  $("lpos").innerHTML = order.length ? order.map((g) => `<button class="lcard ${g.id === LV.focus ? "sel" : ""}" data-id="${g.id}" title="${g.bots.join(", ")}">
+      <div class="r1"><span class="tno ${g.open ? "open" : g.pnl >= 0 ? "win" : "loss"}">#${g.no}</span><span class="who">${who(g.bots)}</span><span class="pl ${cls(g.pnl)}">${sgnUsd(g.pnl)}</span></div>
+      <div class="r2"><span class="side ${g.side}">${g.side === "C" ? "CALL" : "PUT"}</span>SPY ${g.strike} ×${g.qty + (g.addQty || 0)}<span class="pc ${cls(g.pct)}">${sgn(g.pct, 0)}%</span></div>
+      <div class="flow"><div><i>BUY</i><span><b>${hhmm(g.tIn)}</b> · $${g.optIn.toFixed(2)}</span></div><i>→</i><div><i>${g.open ? "NOW" : "SELL"}</i><span>${g.open ? "" : `<b>${hhmm(g.tOut)}</b> · `}$${(now(g) ?? 0).toFixed(2)}</span></div></div>
+      <div class="r3"><span class="ltag ${g.open ? "open" : ""}">${g.open ? "Open · live" : (WHY[g.reason] || g.reason)}</span>${g.alpaca ? alp(g.alpaca) : ""}</div>
     </button>`).join("") : `<div class="empty">No trades yet today${d.marketOpen ? " · bots are watching" : ""}.</div>`;
   for (const el of document.querySelectorAll("#lpos .lcard")) el.onclick = () => { LV.focus = el.dataset.id; renderLive(); };
   liveStatus();
