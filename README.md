@@ -1,6 +1,7 @@
 # SPY 0DTE paper bots
 
-Ten SPY 0DTE option-buying bots (Sniper family, Sniper4, Sniped1, CombinedBot, …) paper-trading live on Alpaca market
+Twelve SPY 0DTE option-buying bots (Sniper family, Sniper4, Time, Sniped1, CombinedBot, Every day, and Noise Area — the
+published Zarattini/Aziz/Barbon SPY intraday-momentum strategy, see `noise_bot.py`) paper-trading live on Alpaca market
 data. **Paper money only — no real orders.** Results: see the GitHub Pages site for this repo.
 
 - `alpaca/run.py` — every minute the market is open: SPY 1m bars (IEX), bid/ask for today's 0DTE strikes, rerun all bots

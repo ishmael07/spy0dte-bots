@@ -116,6 +116,10 @@ class Trader:
                         xi, xs, why = j, c[j], "STALLED"; break       # no new high for n bars: decay is winning
                 if ad.get("late") and hm[j] >= ad["late"][0] and gain < ad["late"][1]:
                     xi, xs, why = j, c[j], "THETA"; break
+            if ex.get("exit_fn") and j > ei:                 # bot-specific exit rule (e.g. noise_bot's band/VWAP trail)
+                r = ex["exit_fn"](j, k)
+                if r:
+                    xi, xs, why = r; break
             if ex.get("tp") and best >= ex["tp"]:
                 xi, xs, why = j, ref + k * ex["tp"] * atr, "TARGET"; break
             if ex["prove"] and j - ei + 1 == ex["prove"][0] and best < ex["prove"][1]:
