@@ -12,6 +12,11 @@ Rules (as published, volatility multiplier 1):
   exit      at a half-hour check: a call exits if close < max(UB, VWAP), a put if close > min(LB, VWAP);
             flat at 3:45 (0DTE). One position at a time; after an exit the next check may enter again.
 No price stop, no target, no time cap — the band/VWAP trail is the only exit, as in the paper.
+
+Variants (VARIANTS below; parameters fixed up front, not tuned on this data — see noise_lab.py):
+  fast   checks every 5m bar from 10:00 instead of only on the half hour (entries and the trail exit)
+  smart  adds the Time bot's adaptive exits: lock profit once the contract is up +200% and gives back 40% of the
+         peak gain; at 2 pm, sell if the trade isn't up at least 25% (theta) — and no new entries from 2 pm
 """
 import sys
 import warnings
@@ -24,6 +29,9 @@ warnings.filterwarnings("ignore")
 LOOKBACK = 14
 CHECK = {955, 1025, 1055, 1125, 1155, 1225, 1255, 1325, 1355, 1425, 1455, 1525}   # 5m bars closing on :00/:30
 LAST_ENTRY = 1455
+SMART = dict(lock=(2.0, 0.4), fade=None, stall=None, late=(1400, 0.25))      # = time_bot.TIME's lock + late rules
+VARIANTS = {"noise": dict(fast=False, smart=False), "noise_fast": dict(fast=True, smart=False),
+            "noise_smart": dict(fast=False, smart=True), "noise_plus": dict(fast=True, smart=True)}
 
 
 def bands(T):
@@ -38,19 +46,21 @@ def bands(T):
     return f5.noise_ub.values, f5.noise_lb.values
 
 
-def run(T, days, capital, frac, detail=False, acct_rule="none", sessions=None, budget=None):
+def run(T, days, capital, frac, detail=False, acct_rule="none", sessions=None, budget=None, variant="noise"):
     """budget=None → size off the account (frac of equity); budget=x → flat $x per trade (backtests)."""
+    v = VARIANTS[variant]
     ub, lb = bands(T)
     c, hm, vw = T.sim.c, T.sim.hm, T.f5.vwap.values
+    is_check = (lambda h: h >= 955) if v["fast"] else (lambda h: h in CHECK)
 
     def trail(j, k):
-        if hm[j] not in CHECK:
+        if not is_check(hm[j]):
             return None
         if (k == 1 and c[j] < max(ub[j], vw[j])) or (k == -1 and c[j] > min(lb[j], vw[j])):
             return j, c[j], "NOISE TRAIL"
         return None
 
-    ex = dict(stop=99, be=None, prove=None, half=False, trail=False, cap=None, exit_fn=trail)
+    ex = dict(stop=99, be=None, prove=None, half=False, trail=False, cap=None, exit_fn=trail, adaptive=SMART if v["smart"] else None)
     A = Account(capital, acct_rule, sorted(sessions or days))
     out = []
     for d in sorted(days):
@@ -59,10 +69,10 @@ def run(T, days, capital, frac, detail=False, acct_rule="none", sessions=None, b
         b, n = T.sim.base[d], len(T.sim.models[d].hm)
         j = b
         while j < b + n - 1:
-            if hm[j] > LAST_ENTRY:
+            if hm[j] > LAST_ENTRY or (v["smart"] and hm[j] >= SMART["late"][0]):   # no buys the theta rule would dump
                 break
             side = None
-            if hm[j] in CHECK and not np.isnan(ub[j]):
+            if is_check(hm[j]) and not np.isnan(ub[j]):
                 side = "C" if (c[j] > ub[j] and c[j] > vw[j]) else "P" if (c[j] < lb[j] and c[j] < vw[j]) else None
             if not side or not A.allowed(d):
                 j += 1
@@ -88,20 +98,5 @@ def stats(tr):
 
 
 if __name__ == "__main__":
-    # python3 noise_bot.py            → 90-session backtest (real-anchored option model), flat $100 per trade
-    from data2 import build
-    from sniperpp import Trader
-    D = build()
-    T, days = Trader(D), D["days"]
-    tr, _ = run(T, days, 1e6, None, budget=float(sys.argv[1]) if len(sys.argv) > 1 else 100.0)
-    print(f"Noise Area · {days[0]} → {days[-1]} · flat ${sys.argv[1] if len(sys.argv) > 1 else 100}/trade")
-    print("  all     ", stats(tr))
-    for q in range(3):
-        blk = set(days[30 * q:30 * q + 30])
-        print(f"  block {q + 1} ", stats([x for x in tr if x["day"] in blk]))
-    print("  1st/day ", stats([x for i, x in enumerate(tr) if i == 0 or tr[i - 1]["day"] != x["day"]]))
-    for cap in (100, 500):
-        _, eq = run(T, days, cap, 0.5)
-        print(f"  ${cap} @50% compounding → ${eq:,.0f}")
-    from collections import Counter
-    print("  exits", Counter(x["why"] for x in tr), " per day", Counter(Counter(x["day"] for x in tr).values()))
+    import noise_lab  # noqa: F401  (variant comparison lives in noise_lab.py)
+    print("run: python3 noise_lab.py")
