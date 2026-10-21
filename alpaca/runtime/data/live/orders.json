@@ -674,5 +674,425 @@
 "status": "missed",
 "note": "entry 234 min old when first seen"
 }
+},
+"sniper-100-261021-C771-4291": {
+"bot": "sniper",
+"cap": 100,
+"symbol": "SPY261021C00771000",
+"day": "2026-10-21",
+"sim_in": 1.31,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"sniper-500-261021-C770-4291": {
+"bot": "sniper",
+"cap": 500,
+"symbol": "SPY261021C00770000",
+"day": "2026-10-21",
+"sim_in": 1.84,
+"qty": 2,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"sniper_plus-100-261021-C774-4291": {
+"bot": "sniper_plus",
+"cap": 100,
+"symbol": "SPY261021C00774000",
+"day": "2026-10-21",
+"sim_in": 0.38,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"sniper_plus-500-261021-C770-4291": {
+"bot": "sniper_plus",
+"cap": 500,
+"symbol": "SPY261021C00770000",
+"day": "2026-10-21",
+"sim_in": 1.84,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"sniper_pp-100-261021-C774-4291": {
+"bot": "sniper_pp",
+"cap": 100,
+"symbol": "SPY261021C00774000",
+"day": "2026-10-21",
+"sim_in": 0.38,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"sniper_pp-500-261021-C770-4291": {
+"bot": "sniper_pp",
+"cap": 500,
+"symbol": "SPY261021C00770000",
+"day": "2026-10-21",
+"sim_in": 1.84,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"sniper_plus_scalp-100-261021-C774-4291": {
+"bot": "sniper_plus_scalp",
+"cap": 100,
+"symbol": "SPY261021C00774000",
+"day": "2026-10-21",
+"sim_in": 0.38,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"sniper_plus_scalp-500-261021-C770-4291": {
+"bot": "sniper_plus_scalp",
+"cap": 500,
+"symbol": "SPY261021C00770000",
+"day": "2026-10-21",
+"sim_in": 1.84,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"sniper_pp_scalp-100-261021-C774-4291": {
+"bot": "sniper_pp_scalp",
+"cap": 100,
+"symbol": "SPY261021C00774000",
+"day": "2026-10-21",
+"sim_in": 0.38,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"sniper_pp_scalp-500-261021-C770-4291": {
+"bot": "sniper_pp_scalp",
+"cap": 500,
+"symbol": "SPY261021C00770000",
+"day": "2026-10-21",
+"sim_in": 1.84,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"sniper_ppp-100-261021-C776-4291": {
+"bot": "sniper_ppp",
+"cap": 100,
+"symbol": "SPY261021C00776000",
+"day": "2026-10-21",
+"sim_in": 0.16,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"sniper_ppp-100-261021-C776-4314": {
+"bot": "sniper_ppp",
+"cap": 100,
+"symbol": "SPY261021C00776000",
+"day": "2026-10-21",
+"sim_in": 0.14,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 127 min old when first seen"
+}
+},
+"sniper_ppp-500-261021-C771-4291": {
+"bot": "sniper_ppp",
+"cap": 500,
+"symbol": "SPY261021C00771000",
+"day": "2026-10-21",
+"sim_in": 1.31,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"sniper_ppp-500-261021-C772-4314": {
+"bot": "sniper_ppp",
+"cap": 500,
+"symbol": "SPY261021C00772000",
+"day": "2026-10-21",
+"sim_in": 1.16,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 127 min old when first seen"
+}
+},
+"sniper4-100-261021-C774-4291": {
+"bot": "sniper4",
+"cap": 100,
+"symbol": "SPY261021C00774000",
+"day": "2026-10-21",
+"sim_in": 0.38,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"sniper4-500-261021-C771-4291": {
+"bot": "sniper4",
+"cap": 500,
+"symbol": "SPY261021C00771000",
+"day": "2026-10-21",
+"sim_in": 1.31,
+"qty": 2,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"time-100-261021-C771-4291": {
+"bot": "time",
+"cap": 100,
+"symbol": "SPY261021C00771000",
+"day": "2026-10-21",
+"sim_in": 1.31,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"time-500-261021-C771-4291": {
+"bot": "time",
+"cap": 500,
+"symbol": "SPY261021C00771000",
+"day": "2026-10-21",
+"sim_in": 1.31,
+"qty": 8,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"sniped1-100-261021-C774-3904": {
+"bot": "sniped1",
+"cap": 100,
+"symbol": "SPY261021C00774000",
+"day": "2026-10-21",
+"sim_in": 0.39,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 238 min old when first seen"
+}
+},
+"sniped1-100-261021-C774-3911": {
+"bot": "sniped1",
+"cap": 100,
+"symbol": "SPY261021C00774000",
+"day": "2026-10-21",
+"sim_in": 0.47,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 231 min old when first seen"
+}
+},
+"sniped1-100-261021-C773-3969": {
+"bot": "sniped1",
+"cap": 100,
+"symbol": "SPY261021C00773000",
+"day": "2026-10-21",
+"sim_in": 0.36,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 173 min old when first seen"
+}
+},
+"sniped1-500-261021-C772-3904": {
+"bot": "sniped1",
+"cap": 500,
+"symbol": "SPY261021C00772000",
+"day": "2026-10-21",
+"sim_in": 0.92,
+"qty": 2,
+"buy": {
+"status": "missed",
+"note": "entry 238 min old when first seen"
+}
+},
+"sniped1-500-261021-C772-3911": {
+"bot": "sniped1",
+"cap": 500,
+"symbol": "SPY261021C00772000",
+"day": "2026-10-21",
+"sim_in": 1.09,
+"qty": 2,
+"buy": {
+"status": "missed",
+"note": "entry 231 min old when first seen"
+}
+},
+"sniped1-500-261021-C772-3969": {
+"bot": "sniped1",
+"cap": 500,
+"symbol": "SPY261021C00772000",
+"day": "2026-10-21",
+"sim_in": 0.58,
+"qty": 3,
+"buy": {
+"status": "missed",
+"note": "entry 173 min old when first seen"
+}
+},
+"combined-100-261021-C774-4291": {
+"bot": "combined",
+"cap": 100,
+"symbol": "SPY261021C00774000",
+"day": "2026-10-21",
+"sim_in": 0.38,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"combined-500-261021-C774-3904": {
+"bot": "combined",
+"cap": 500,
+"symbol": "SPY261021C00774000",
+"day": "2026-10-21",
+"sim_in": 0.39,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 238 min old when first seen"
+}
+},
+"combined-500-261021-C771-4291": {
+"bot": "combined",
+"cap": 500,
+"symbol": "SPY261021C00771000",
+"day": "2026-10-21",
+"sim_in": 1.31,
+"qty": 2,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"combined-500-261021-C774-3911": {
+"bot": "combined",
+"cap": 500,
+"symbol": "SPY261021C00774000",
+"day": "2026-10-21",
+"sim_in": 0.47,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 231 min old when first seen"
+}
+},
+"combined-500-261021-C772-3969": {
+"bot": "combined",
+"cap": 500,
+"symbol": "SPY261021C00772000",
+"day": "2026-10-21",
+"sim_in": 0.58,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 173 min old when first seen"
+}
+},
+"daily-100-261021-C776-4291": {
+"bot": "daily",
+"cap": 100,
+"symbol": "SPY261021C00776000",
+"day": "2026-10-21",
+"sim_in": 0.16,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"daily-500-261021-C770-4291": {
+"bot": "daily",
+"cap": 500,
+"symbol": "SPY261021C00770000",
+"day": "2026-10-21",
+"sim_in": 1.84,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 242 min old when first seen"
+}
+},
+"noise_plus-100-261021-C774-4328": {
+"bot": "noise_plus",
+"cap": 100,
+"symbol": "SPY261021C00774000",
+"day": "2026-10-21",
+"sim_in": 0.84,
+"qty": 2,
+"buy": {
+"status": "missed",
+"note": "entry 57 min old when first seen"
+}
+},
+"noise_plus-100-261021-C774-4335": {
+"bot": "noise_plus",
+"cap": 100,
+"symbol": "SPY261021C00774000",
+"day": "2026-10-21",
+"sim_in": 0.79,
+"qty": 2,
+"buy": {
+"status": "missed",
+"note": "entry 22 min old when first seen"
+}
+},
+"noise_plus-500-261021-C774-4328": {
+"bot": "noise_plus",
+"cap": 500,
+"symbol": "SPY261021C00774000",
+"day": "2026-10-21",
+"sim_in": 0.84,
+"qty": 8,
+"buy": {
+"status": "missed",
+"note": "entry 57 min old when first seen"
+}
+},
+"noise_plus-500-261021-C774-4335": {
+"bot": "noise_plus",
+"cap": 500,
+"symbol": "SPY261021C00774000",
+"day": "2026-10-21",
+"sim_in": 0.79,
+"qty": 7,
+"buy": {
+"status": "missed",
+"note": "entry 22 min old when first seen"
+}
 }
 }
