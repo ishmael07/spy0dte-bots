@@ -1399,7 +1399,12 @@
 "status": "filled",
 "fill": 1.35,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": null,
+"status": null
+},
+"sim_out": 0.62
 },
 "noise-500-261022-P763-4344": {
 "bot": "noise",
@@ -1413,6 +1418,11 @@
 "status": "filled",
 "fill": 1.975,
 "filled_qty": 2
-}
+},
+"sell": {
+"id": null,
+"status": null
+},
+"sim_out": 1.27
 }
 }
