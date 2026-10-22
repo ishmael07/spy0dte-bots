@@ -1138,5 +1138,77 @@
 },
 "sim_out": 0.26,
 "pnl": -370.0
+},
+"daily-100-261022-P759-4291": {
+"bot": "daily",
+"cap": 100,
+"symbol": "SPY261022P00759000",
+"day": "2026-10-22",
+"sim_in": 0.13,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 103 min old when first seen"
+}
+},
+"daily-500-261022-P767-4291": {
+"bot": "daily",
+"cap": 500,
+"symbol": "SPY261022P00767000",
+"day": "2026-10-22",
+"sim_in": 1.63,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 103 min old when first seen"
+}
+},
+"noise-100-261022-P762-4302": {
+"bot": "noise",
+"cap": 100,
+"symbol": "SPY261022P00762000",
+"day": "2026-10-22",
+"sim_in": 1.32,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 48 min old when first seen"
+}
+},
+"noise-500-261022-P763-4302": {
+"bot": "noise",
+"cap": 500,
+"symbol": "SPY261022P00763000",
+"day": "2026-10-22",
+"sim_in": 1.73,
+"qty": 2,
+"buy": {
+"status": "missed",
+"note": "entry 48 min old when first seen"
+}
+},
+"noise_plus-100-261022-P764-4301": {
+"bot": "noise_plus",
+"cap": 100,
+"symbol": "SPY261022P00764000",
+"day": "2026-10-22",
+"sim_in": 1.48,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 53 min old when first seen"
+}
+},
+"noise_plus-500-261022-P765-4301": {
+"bot": "noise_plus",
+"cap": 500,
+"symbol": "SPY261022P00765000",
+"day": "2026-10-22",
+"sim_in": 1.97,
+"qty": 3,
+"buy": {
+"status": "missed",
+"note": "entry 53 min old when first seen"
+}
 }
 }
