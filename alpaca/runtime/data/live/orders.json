@@ -1292,9 +1292,9 @@
 "qty": 1,
 "buy": {
 "id": "5702fb85-5e97-4132-bc89-1fad0bb1c556",
-"status": "new",
-"fill": null,
-"filled_qty": 0
+"status": "filled",
+"fill": 1.05,
+"filled_qty": 1
 }
 },
 "noise-500-261022-P764-4332": {
