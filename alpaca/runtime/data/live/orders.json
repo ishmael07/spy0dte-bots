@@ -1210,5 +1210,33 @@
 "status": "missed",
 "note": "entry 53 min old when first seen"
 }
+},
+"noise_plus-100-261022-P763-4314": {
+"bot": "noise_plus",
+"cap": 100,
+"symbol": "SPY261022P00763000",
+"day": "2026-10-22",
+"sim_in": 1.41,
+"qty": 1,
+"buy": {
+"id": "2682ef60-b409-473c-be95-9388ed1c079a",
+"status": "filled",
+"fill": 1.46,
+"filled_qty": 1
+}
+},
+"noise_plus-500-261022-P763-4314": {
+"bot": "noise_plus",
+"cap": 500,
+"symbol": "SPY261022P00763000",
+"day": "2026-10-22",
+"sim_in": 1.41,
+"qty": 4,
+"buy": {
+"id": "4a6bc508-aca9-44dd-983d-904d7ff9fe2b",
+"status": "filled",
+"fill": 1.45,
+"filled_qty": 4
+}
 }
 }
