@@ -1688,5 +1688,125 @@
 "status": "missed",
 "note": "entry 229 min old when first seen"
 }
+},
+"daily-100-261026-C769-4291": {
+"bot": "daily",
+"cap": 100,
+"symbol": "SPY261026C00769000",
+"day": "2026-10-26",
+"sim_in": 0.15,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 315 min old when first seen"
+}
+},
+"daily-500-261026-C763-4291": {
+"bot": "daily",
+"cap": 500,
+"symbol": "SPY261026C00763000",
+"day": "2026-10-26",
+"sim_in": 1.64,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 315 min old when first seen"
+}
+},
+"noise-100-261026-C766-4302": {
+"bot": "noise",
+"cap": 100,
+"symbol": "SPY261026C00766000",
+"day": "2026-10-26",
+"sim_in": 0.81,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 260 min old when first seen"
+}
+},
+"noise-500-261026-C765-4302": {
+"bot": "noise",
+"cap": 500,
+"symbol": "SPY261026C00765000",
+"day": "2026-10-26",
+"sim_in": 1.24,
+"qty": 2,
+"buy": {
+"status": "missed",
+"note": "entry 260 min old when first seen"
+}
+},
+"noise_plus-100-261026-C764-4297": {
+"bot": "noise_plus",
+"cap": 100,
+"symbol": "SPY261026C00764000",
+"day": "2026-10-26",
+"sim_in": 1.46,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 285 min old when first seen"
+}
+},
+"noise_plus-100-261026-C765-4332": {
+"bot": "noise_plus",
+"cap": 100,
+"symbol": "SPY261026C00765000",
+"day": "2026-10-26",
+"sim_in": 1.03,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 110 min old when first seen"
+}
+},
+"noise_plus-100-261026-C766-4343": {
+"bot": "noise_plus",
+"cap": 100,
+"symbol": "SPY261026C00766000",
+"day": "2026-10-26",
+"sim_in": 0.5,
+"qty": 2,
+"buy": {
+"status": "missed",
+"note": "entry 55 min old when first seen"
+}
+},
+"noise_plus-500-261026-C764-4297": {
+"bot": "noise_plus",
+"cap": 500,
+"symbol": "SPY261026C00764000",
+"day": "2026-10-26",
+"sim_in": 1.46,
+"qty": 3,
+"buy": {
+"status": "missed",
+"note": "entry 285 min old when first seen"
+}
+},
+"noise_plus-500-261026-C765-4332": {
+"bot": "noise_plus",
+"cap": 500,
+"symbol": "SPY261026C00765000",
+"day": "2026-10-26",
+"sim_in": 1.03,
+"qty": 4,
+"buy": {
+"status": "missed",
+"note": "entry 110 min old when first seen"
+}
+},
+"noise_plus-500-261026-C766-4343": {
+"bot": "noise_plus",
+"cap": 500,
+"symbol": "SPY261026C00766000",
+"day": "2026-10-26",
+"sim_in": 0.5,
+"qty": 8,
+"buy": {
+"status": "missed",
+"note": "entry 55 min old when first seen"
+}
 }
 }
