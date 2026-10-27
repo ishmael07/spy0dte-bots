@@ -1808,5 +1808,33 @@
 "status": "missed",
 "note": "entry 55 min old when first seen"
 }
+},
+"daily-100-261027-C773-4291": {
+"bot": "daily",
+"cap": 100,
+"symbol": "SPY261027C00773000",
+"day": "2026-10-27",
+"sim_in": 0.09,
+"qty": 2,
+"buy": {
+"id": "60e9fa34-5d7b-464b-a8a4-49606ffb3702",
+"status": "filled",
+"fill": 0.13,
+"filled_qty": 2
+}
+},
+"daily-500-261027-C768-4291": {
+"bot": "daily",
+"cap": 500,
+"symbol": "SPY261027C00768000",
+"day": "2026-10-27",
+"sim_in": 1.1,
+"qty": 2,
+"buy": {
+"id": "89dcac28-5f20-440c-895c-07a5660aa2ed",
+"status": "filled",
+"fill": 1.37,
+"filled_qty": 2
+}
 }
 }
