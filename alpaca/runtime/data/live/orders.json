@@ -2144,5 +2144,47 @@
 "fill": 2.23,
 "filled_qty": 1
 }
+},
+"sniped1-100-261028-C777-5510": {
+"bot": "sniped1",
+"cap": 100,
+"symbol": "SPY261028C00777000",
+"day": "2026-10-28",
+"sim_in": 0.36,
+"qty": 1,
+"buy": {
+"id": "a51d53b8-18ff-4f37-9cbe-ddff41a08bb2",
+"status": "filled",
+"fill": 0.34,
+"filled_qty": 1
+}
+},
+"sniped1-500-261028-C772-5510": {
+"bot": "sniped1",
+"cap": 500,
+"symbol": "SPY261028C00772000",
+"day": "2026-10-28",
+"sim_in": 1.8,
+"qty": 1,
+"buy": {
+"id": "1e00caaa-c1f4-42d3-a86c-e1fb17e400c5",
+"status": "filled",
+"fill": 1.72,
+"filled_qty": 1
+}
+},
+"combined-500-261028-C776-5510": {
+"bot": "combined",
+"cap": 500,
+"symbol": "SPY261028C00776000",
+"day": "2026-10-28",
+"sim_in": 0.52,
+"qty": 1,
+"buy": {
+"id": "8ce1cda3-e93a-4d32-b698-f1484ab42b57",
+"status": "filled",
+"fill": 0.49,
+"filled_qty": 1
+}
 }
 }
