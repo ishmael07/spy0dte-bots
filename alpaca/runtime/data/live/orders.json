@@ -2157,7 +2157,15 @@
 "status": "filled",
 "fill": 0.34,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "1dc0f6c6-66b8-4304-b470-90401c0279e6",
+"status": "filled",
+"fill": 0.28,
+"filled_qty": 1
+},
+"sim_out": 0.3,
+"pnl": -6.0
 },
 "sniped1-500-261028-C772-5510": {
 "bot": "sniped1",
@@ -2171,7 +2179,15 @@
 "status": "filled",
 "fill": 1.72,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "2a76bdc5-466e-40b4-b8f6-62417e60d463",
+"status": "filled",
+"fill": 1.55,
+"filled_qty": 1
+},
+"sim_out": 1.63,
+"pnl": -17.0
 },
 "combined-500-261028-C776-5510": {
 "bot": "combined",
@@ -2185,6 +2201,14 @@
 "status": "filled",
 "fill": 0.49,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "7c74b7d6-b897-4e30-ae0a-937bc90cae28",
+"status": "filled",
+"fill": 0.41,
+"filled_qty": 1
+},
+"sim_out": 0.42,
+"pnl": -8.0
 }
 }
