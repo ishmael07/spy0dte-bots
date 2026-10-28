@@ -2129,7 +2129,15 @@
 "status": "filled",
 "fill": 0.1,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "e276b7db-18da-44e1-9dbb-3be1775e842e",
+"status": "filled",
+"fill": 0.08,
+"filled_qty": 1
+},
+"sim_out": 0.08,
+"pnl": -2.0
 },
 "daily-500-261028-C771-4296": {
 "bot": "daily",
@@ -2143,7 +2151,15 @@
 "status": "filled",
 "fill": 2.23,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "27e4f3e6-c412-44e6-a043-fb73ce20392c",
+"status": "filled",
+"fill": 2.4,
+"filled_qty": 1
+},
+"sim_out": 2.23,
+"pnl": 17.0
 },
 "sniped1-100-261028-C777-5510": {
 "bot": "sniped1",
