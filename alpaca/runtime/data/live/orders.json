@@ -2226,5 +2226,33 @@
 },
 "sim_out": 0.42,
 "pnl": -8.0
+},
+"daily-100-261029-P758-4291": {
+"bot": "daily",
+"cap": 100,
+"symbol": "SPY261029P00758000",
+"day": "2026-10-29",
+"sim_in": 0.11,
+"qty": 1,
+"buy": {
+"id": "825372ad-1f20-4f63-9300-999d5725aef7",
+"status": "filled",
+"fill": 0.1,
+"filled_qty": 1
+}
+},
+"daily-500-261029-P768-4291": {
+"bot": "daily",
+"cap": 500,
+"symbol": "SPY261029P00768000",
+"day": "2026-10-29",
+"sim_in": 2.24,
+"qty": 1,
+"buy": {
+"id": "43e4e645-abf8-4dc6-92f6-baf6190ec9e6",
+"status": "filled",
+"fill": 1.97,
+"filled_qty": 1
+}
 }
 }
