@@ -2283,6 +2283,14 @@
 "status": "filled",
 "fill": 1.29,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "47885bc5-ced5-45a0-a759-269b9105c678",
+"status": "filled",
+"fill": 1.47,
+"filled_qty": 1
+},
+"sim_out": 1.15,
+"pnl": 18.0
 }
 }
