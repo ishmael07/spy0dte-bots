@@ -2292,5 +2292,33 @@
 },
 "sim_out": 1.15,
 "pnl": 18.0
+},
+"noise_plus-100-261030-P756-4284": {
+"bot": "noise_plus",
+"cap": 100,
+"symbol": "SPY261030P00756000",
+"day": "2026-10-30",
+"sim_in": 0.59,
+"qty": 1,
+"buy": {
+"id": "a18183e6-f19b-4c58-bf25-3814b8f3510d",
+"status": "filled",
+"fill": 0.79,
+"filled_qty": 1
+}
+},
+"noise_plus-500-261030-P760-4284": {
+"bot": "noise_plus",
+"cap": 500,
+"symbol": "SPY261030P00760000",
+"day": "2026-10-30",
+"sim_in": 1.95,
+"qty": 1,
+"buy": {
+"id": "a248ace1-cf08-46c5-b232-c51b6e4695bb",
+"status": "filled",
+"fill": 2.42,
+"filled_qty": 1
+}
 }
 }
