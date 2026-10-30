@@ -2393,7 +2393,15 @@
 "status": "filled",
 "fill": 0.35,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "754b43ce-efed-4f35-94ba-0e6ec6475293",
+"status": "filled",
+"fill": 2.66,
+"filled_qty": 1
+},
+"sim_out": 2.48,
+"pnl": 231.0
 },
 "noise_plus-500-261030-P759-4295": {
 "bot": "noise_plus",
