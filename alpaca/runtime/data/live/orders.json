@@ -2436,5 +2436,17 @@
 "fill": 0.95,
 "filled_qty": 1
 }
+},
+"daily-100-261030-P746-4277": {
+"bot": "daily",
+"cap": 100,
+"symbol": "SPY261030P00746000",
+"day": "2026-10-30",
+"sim_in": 0.09,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 156 min old when first seen"
+}
 }
 }
