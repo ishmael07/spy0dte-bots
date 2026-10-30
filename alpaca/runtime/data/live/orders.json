@@ -2448,5 +2448,17 @@
 "status": "missed",
 "note": "entry 156 min old when first seen"
 }
+},
+"daily-100-261030-P747-4277": {
+"bot": "daily",
+"cap": 100,
+"symbol": "SPY261030P00747000",
+"day": "2026-10-30",
+"sim_in": 0.1,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 321 min old when first seen"
+}
 }
 }
