@@ -2270,5 +2270,19 @@
 },
 "sim_out": 1.24,
 "pnl": -50.0
+},
+"daily-500-261030-P759-4277": {
+"bot": "daily",
+"cap": 500,
+"symbol": "SPY261030P00759000",
+"day": "2026-10-30",
+"sim_in": 1.55,
+"qty": 1,
+"buy": {
+"id": "81c37aba-36b4-473e-b2a9-77f7317aff56",
+"status": "filled",
+"fill": 1.29,
+"filled_qty": 1
+}
 }
 }
