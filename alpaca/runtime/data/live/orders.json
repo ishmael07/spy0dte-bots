@@ -2415,7 +2415,12 @@
 "status": "filled",
 "fill": 1.42,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": null,
+"status": null
+},
+"sim_out": 5.71
 },
 "noise-100-261030-P753-4300": {
 "bot": "noise",
@@ -2429,7 +2434,12 @@
 "status": "filled",
 "fill": 0.21,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": null,
+"status": null
+},
+"sim_out": 0.67
 },
 "noise-500-261030-P757-4300": {
 "bot": "noise",
@@ -2443,7 +2453,12 @@
 "status": "filled",
 "fill": 0.95,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": null,
+"status": null
+},
+"sim_out": 3.77
 },
 "daily-100-261030-P746-4277": {
 "bot": "daily",
