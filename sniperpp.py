@@ -75,6 +75,8 @@ class Trader:
         ref = c[i]
         stop = ref - k * ex["stop"] * atr
         ei = i + 1
+        if ei >= b + n:                     # live: entry bar hasn't closed yet; retry next poll
+            return None
         pk = s.pick3(d, side, ei, o[ei], budget, rule, ref + 3 * k * atr, stop, 6)
         if not pk:
             return None
