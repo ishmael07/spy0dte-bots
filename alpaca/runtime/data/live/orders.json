@@ -2510,7 +2510,15 @@
 "status": "filled",
 "fill": 0.33,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "5c4c6b05-cdef-46ad-9419-b5ffc3a66b5e",
+"status": "filled",
+"fill": 0.29,
+"filled_qty": 1
+},
+"sim_out": 0.26,
+"pnl": -4.0
 },
 "noise-500-261102-C760-4282": {
 "bot": "noise",
@@ -2524,7 +2532,14 @@
 "status": "filled",
 "fill": 1.92,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "30304be2-7aef-41bb-a1de-52571756c528",
+"status": "new",
+"fill": null,
+"filled_qty": 0
+},
+"sim_out": 2.11
 },
 "noise_plus-100-261102-C761-4282": {
 "bot": "noise_plus",
@@ -2538,7 +2553,15 @@
 "status": "filled",
 "fill": 1.42,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "12fd7bd4-b288-408b-b8cc-c3b6175a84b7",
+"status": "filled",
+"fill": 1.54,
+"filled_qty": 1
+},
+"sim_out": 1.52,
+"pnl": 12.0
 },
 "noise_plus-500-261102-C760-4282": {
 "bot": "noise_plus",
@@ -2552,6 +2575,14 @@
 "status": "filled",
 "fill": 1.93,
 "filled_qty": 2
-}
+},
+"sell": {
+"id": "b781cd76-a9ba-4b36-80ad-796466c5cd93",
+"status": "filled",
+"fill": 2.13,
+"filled_qty": 2
+},
+"sim_out": 2.11,
+"pnl": 40.0
 }
 }
