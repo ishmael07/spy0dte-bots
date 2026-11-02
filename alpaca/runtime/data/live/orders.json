@@ -2507,9 +2507,9 @@
 "qty": 1,
 "buy": {
 "id": "13990b65-1cc3-44c0-a210-bbb57576e794",
-"status": "new",
-"fill": null,
-"filled_qty": 0
+"status": "filled",
+"fill": 0.33,
+"filled_qty": 1
 }
 },
 "noise-500-261102-C760-4282": {
@@ -2521,9 +2521,9 @@
 "qty": 1,
 "buy": {
 "id": "12de38a5-10dd-49c7-956f-7caf4385ba05",
-"status": "new",
-"fill": null,
-"filled_qty": 0
+"status": "filled",
+"fill": 1.92,
+"filled_qty": 1
 }
 },
 "noise_plus-100-261102-C761-4282": {
