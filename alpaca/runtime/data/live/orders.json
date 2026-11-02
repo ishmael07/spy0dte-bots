@@ -2535,11 +2535,12 @@
 },
 "sell": {
 "id": "30304be2-7aef-41bb-a1de-52571756c528",
-"status": "new",
-"fill": null,
-"filled_qty": 0
+"status": "filled",
+"fill": 2.13,
+"filled_qty": 1
 },
-"sim_out": 2.11
+"sim_out": 2.11,
+"pnl": 21.0
 },
 "noise_plus-100-261102-C761-4282": {
 "bot": "noise_plus",
