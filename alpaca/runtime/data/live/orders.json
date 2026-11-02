@@ -2497,5 +2497,61 @@
 "fill": 1.57,
 "filled_qty": 1
 }
+},
+"noise-100-261102-C765-4282": {
+"bot": "noise",
+"cap": 100,
+"symbol": "SPY261102C00765000",
+"day": "2026-11-02",
+"sim_in": 0.38,
+"qty": 1,
+"buy": {
+"id": "13990b65-1cc3-44c0-a210-bbb57576e794",
+"status": "new",
+"fill": null,
+"filled_qty": 0
+}
+},
+"noise-500-261102-C760-4282": {
+"bot": "noise",
+"cap": 500,
+"symbol": "SPY261102C00760000",
+"day": "2026-11-02",
+"sim_in": 1.91,
+"qty": 1,
+"buy": {
+"id": "12de38a5-10dd-49c7-956f-7caf4385ba05",
+"status": "new",
+"fill": null,
+"filled_qty": 0
+}
+},
+"noise_plus-100-261102-C761-4282": {
+"bot": "noise_plus",
+"cap": 100,
+"symbol": "SPY261102C00761000",
+"day": "2026-11-02",
+"sim_in": 1.43,
+"qty": 1,
+"buy": {
+"id": "b9d19a49-7f0a-4602-80b3-0a33fd245122",
+"status": "filled",
+"fill": 1.42,
+"filled_qty": 1
+}
+},
+"noise_plus-500-261102-C760-4282": {
+"bot": "noise_plus",
+"cap": 500,
+"symbol": "SPY261102C00760000",
+"day": "2026-11-02",
+"sim_in": 1.91,
+"qty": 2,
+"buy": {
+"id": "e932381a-ce3a-4b7c-81fd-470c41cca316",
+"status": "filled",
+"fill": 1.93,
+"filled_qty": 2
+}
 }
 }
