@@ -3332,7 +3332,14 @@
 "status": "filled",
 "fill": 0.11,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "c8bcbc2f-490b-4f32-aed5-aa51455249f3",
+"status": "new",
+"fill": null,
+"filled_qty": 0
+},
+"sim_out": 0.0
 },
 "noise-500-261104-C769-4306": {
 "bot": "noise",
@@ -3346,7 +3353,15 @@
 "status": "filled",
 "fill": 0.8,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "81545a0c-f2b1-4cce-be29-4bf71c1041a7",
+"status": "filled",
+"fill": 0.05,
+"filled_qty": 1
+},
+"sim_out": 0.06,
+"pnl": -75.0
 },
 "sniper_ppp-100-261104-C777-4279": {
 "bot": "sniper_ppp",
