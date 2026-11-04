@@ -2892,7 +2892,15 @@
 "status": "filled",
 "fill": 3.24,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "84be0b43-036a-4d7c-aeb0-8d66ddffa171",
+"status": "filled",
+"fill": 2.71,
+"filled_qty": 1
+},
+"sim_out": 2.48,
+"pnl": -53.0
 },
 "sniper-100-261104-C769-4279": {
 "bot": "sniper",
