@@ -3069,9 +3069,9 @@
 "qty": 1,
 "buy": {
 "id": "18dc77c8-4f52-4b7f-b801-0d9915f23e87",
-"status": "new",
-"fill": null,
-"filled_qty": 0
+"status": "filled",
+"fill": 0.3,
+"filled_qty": 1
 }
 },
 "noise-500-261104-C767-4282": {
@@ -3113,6 +3113,34 @@
 "id": "a9693f65-98d3-4d20-9970-59c939a6c294",
 "status": "filled",
 "fill": 2.47,
+"filled_qty": 1
+}
+},
+"sniper_ppp-100-261104-C776-4283": {
+"bot": "sniper_ppp",
+"cap": 100,
+"symbol": "SPY261104C00776000",
+"day": "2026-11-04",
+"sim_in": 0.1,
+"qty": 1,
+"buy": {
+"id": "e78efbec-dbf2-4932-a063-db5427114617",
+"status": "filled",
+"fill": 0.07,
+"filled_qty": 1
+}
+},
+"sniper_ppp-500-261104-C770-4283": {
+"bot": "sniper_ppp",
+"cap": 500,
+"symbol": "SPY261104C00770000",
+"day": "2026-11-04",
+"sim_in": 0.88,
+"qty": 1,
+"buy": {
+"id": "a5fc1bca-6086-45a2-85da-1b2e88d2d738",
+"status": "filled",
+"fill": 0.86,
 "filled_qty": 1
 }
 }
