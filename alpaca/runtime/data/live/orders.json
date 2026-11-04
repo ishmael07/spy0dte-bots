@@ -3107,11 +3107,12 @@
 },
 "sell": {
 "id": "63e09d0e-7a8f-4919-8d63-37c628be71de",
-"status": "new",
-"fill": null,
-"filled_qty": 0
+"status": "filled",
+"fill": 0.07,
+"filled_qty": 1
 },
-"sim_out": 0.09
+"sim_out": 0.09,
+"pnl": -23.0
 },
 "noise-500-261104-C767-4282": {
 "bot": "noise",
@@ -3128,11 +3129,12 @@
 },
 "sell": {
 "id": "e3dab8d7-194b-4b66-8420-7658e9708c23",
-"status": "new",
-"fill": null,
-"filled_qty": 0
+"status": "filled",
+"fill": 0.97,
+"filled_qty": 1
 },
-"sim_out": 1.36
+"sim_out": 1.36,
+"pnl": -153.0
 },
 "noise_plus-100-261104-C769-4282": {
 "bot": "noise_plus",
