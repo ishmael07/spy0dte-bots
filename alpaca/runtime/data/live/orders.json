@@ -2879,5 +2879,19 @@
 },
 "sim_out": 0.94,
 "pnl": -84.0
+},
+"daily-500-261104-C764-4277": {
+"bot": "daily",
+"cap": 500,
+"symbol": "SPY261104C00764000",
+"day": "2026-11-04",
+"sim_in": 1.64,
+"qty": 1,
+"buy": {
+"id": "ee52075b-f165-4428-a2da-e98bcb777709",
+"status": "filled",
+"fill": 3.24,
+"filled_qty": 1
+}
 }
 }
