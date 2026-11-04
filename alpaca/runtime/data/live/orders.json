@@ -3116,7 +3116,15 @@
 "status": "filled",
 "fill": 1.4,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "c4370c48-9134-4010-8ead-05918c619844",
+"status": "filled",
+"fill": 0.72,
+"filled_qty": 1
+},
+"sim_out": 0.77,
+"pnl": -68.0
 },
 "noise_plus-500-261104-C767-4282": {
 "bot": "noise_plus",
@@ -3130,7 +3138,15 @@
 "status": "filled",
 "fill": 2.47,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "25cb44f0-eb36-499a-83f7-c057e8e5ad2f",
+"status": "filled",
+"fill": 1.52,
+"filled_qty": 1
+},
+"sim_out": 1.54,
+"pnl": -95.0
 },
 "sniper_ppp-100-261104-C776-4283": {
 "bot": "sniper_ppp",
@@ -3144,7 +3160,15 @@
 "status": "filled",
 "fill": 0.07,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "10fd1b50-7448-4230-bf76-b0d066a3a243",
+"status": "filled",
+"fill": 0.03,
+"filled_qty": 1
+},
+"sim_out": 0.05,
+"pnl": -4.0
 },
 "sniper_ppp-500-261104-C770-4283": {
 "bot": "sniper_ppp",
@@ -3158,6 +3182,42 @@
 "status": "filled",
 "fill": 0.86,
 "filled_qty": 1
+},
+"sell": {
+"id": "fb13f562-a3a3-49ad-91ce-ac913af2a934",
+"status": "filled",
+"fill": 0.47,
+"filled_qty": 1
+},
+"sim_out": 0.6,
+"pnl": -39.0
+},
+"noise_plus-100-261104-C768-4288": {
+"bot": "noise_plus",
+"cap": 100,
+"symbol": "SPY261104C00768000",
+"day": "2026-11-04",
+"sim_in": 1.13,
+"qty": 1,
+"buy": {
+"id": "6da38f6f-09e2-44d4-b1a9-70a7d7902fa1",
+"status": "new",
+"fill": null,
+"filled_qty": 0
+}
+},
+"noise_plus-500-261104-C767-4288": {
+"bot": "noise_plus",
+"cap": 500,
+"symbol": "SPY261104C00767000",
+"day": "2026-11-04",
+"sim_in": 1.58,
+"qty": 2,
+"buy": {
+"id": "2f46195e-d02f-41d5-8fc1-b2000559b647",
+"status": "filled",
+"fill": 1.32,
+"filled_qty": 2
 }
 }
 }
