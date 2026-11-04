@@ -3201,9 +3201,9 @@
 "qty": 1,
 "buy": {
 "id": "6da38f6f-09e2-44d4-b1a9-70a7d7902fa1",
-"status": "new",
-"fill": null,
-"filled_qty": 0
+"status": "filled",
+"fill": 0.94,
+"filled_qty": 1
 }
 },
 "noise_plus-500-261104-C767-4288": {
