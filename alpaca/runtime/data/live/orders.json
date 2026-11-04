@@ -3347,5 +3347,29 @@
 "fill": 0.8,
 "filled_qty": 1
 }
+},
+"sniper_ppp-100-261104-C777-4279": {
+"bot": "sniper_ppp",
+"cap": 100,
+"symbol": "SPY261104C00777000",
+"day": "2026-11-04",
+"sim_in": 0.11,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 311 min old when first seen"
+}
+},
+"sniper_ppp-100-261104-C777-4283": {
+"bot": "sniper_ppp",
+"cap": 100,
+"symbol": "SPY261104C00777000",
+"day": "2026-11-04",
+"sim_in": 0.09,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 291 min old when first seen"
+}
 }
 }
