@@ -3399,7 +3399,15 @@
 "status": "filled",
 "fill": 3.08,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "1bb7f847-1929-463e-b846-ae57a1108dec",
+"status": "filled",
+"fill": 18.04,
+"filled_qty": 1
+},
+"sim_out": 11.02,
+"pnl": 1496.0
 },
 "noise-500-261105-P750-4282": {
 "bot": "noise",
