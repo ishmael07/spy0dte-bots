@@ -3472,5 +3472,19 @@
 "fill": 2.84,
 "filled_qty": 1
 }
+},
+"noise-100-261105-P728-4330": {
+"bot": "noise",
+"cap": 100,
+"symbol": "SPY261105P00728000",
+"day": "2026-11-05",
+"sim_in": 0.12,
+"qty": 1,
+"buy": {
+"id": "c6c9eae8-c399-45d2-b908-9871c9d900ac",
+"status": "filled",
+"fill": 0.51,
+"filled_qty": 1
+}
 }
 }
