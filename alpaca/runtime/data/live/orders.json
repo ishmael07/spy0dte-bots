@@ -3537,5 +3537,61 @@
 "status": "missed",
 "note": "entry 211 min old when first seen"
 }
+},
+"noise-100-261106-C744-4282": {
+"bot": "noise",
+"cap": 100,
+"symbol": "SPY261106C00744000",
+"day": "2026-11-06",
+"sim_in": 1.7,
+"qty": 1,
+"buy": {
+"id": "26484481-f21d-4185-a7e6-7be3735ff478",
+"status": "filled",
+"fill": 1.29,
+"filled_qty": 1
+}
+},
+"noise-500-261106-C741-4282": {
+"bot": "noise",
+"cap": 500,
+"symbol": "SPY261106C00741000",
+"day": "2026-11-06",
+"sim_in": 3.01,
+"qty": 2,
+"buy": {
+"id": "ff14d9b0-f0ec-4cbe-9422-300a0def3df8",
+"status": "filled",
+"fill": 2.31,
+"filled_qty": 2
+}
+},
+"noise_plus-100-261106-C741-4282": {
+"bot": "noise_plus",
+"cap": 100,
+"symbol": "SPY261106C00741000",
+"day": "2026-11-06",
+"sim_in": 3.01,
+"qty": 2,
+"buy": {
+"id": "b89c00a0-9303-4bfc-a301-6932cfe428fc",
+"status": "new",
+"fill": null,
+"filled_qty": 0
+}
+},
+"noise_plus-500-261106-C741-4282": {
+"bot": "noise_plus",
+"cap": 500,
+"symbol": "SPY261106C00741000",
+"day": "2026-11-06",
+"sim_in": 3.01,
+"qty": 2,
+"buy": {
+"id": "55be16c3-9c79-4ebd-a6bd-702b591a8824",
+"status": "new",
+"fill": null,
+"filled_qty": 0
+}
 }
 }
