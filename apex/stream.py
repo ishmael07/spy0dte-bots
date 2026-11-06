@@ -293,7 +293,7 @@ class Apex:
         """book realised P&L into each ledger once both legs filled; re-price unfilled sells"""
         for cap, led in self.L.items():
             for rec in led["trades"]:
-                if rec.get("booked") or rec.get("status") == "vetoed":
+                if rec.get("booked") or rec.get("status") == "vetoed" or rec.get("day") != self.today:
                     continue
                 if not self.dry:
                     self.fill(rec)
