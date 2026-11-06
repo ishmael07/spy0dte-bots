@@ -44,6 +44,9 @@ def publish(message):
     page = os.path.join(RUNTIME, "web", "paper.html")
     if os.path.exists(page):
         shutil.copy(page, os.path.join(docs, "index.html"))
+    apex = os.path.join(RUNTIME, "web", "apex.html")
+    if os.path.exists(apex):
+        shutil.copy(apex, os.path.join(docs, "apex.html"))
     git = ["git", "-C", ROOT]
     subprocess.run(git + ["add", "docs", "alpaca/runtime/data/live"], check=False)
     if subprocess.run(git + ["diff", "--cached", "--quiet"]).returncode != 0:
@@ -92,6 +95,7 @@ def engine(start, H=None, today=None, trade=False):
             summaries[acc["name"]] = dict(orders.account_summary(acc["H"]) or {}, bot=acc["bot"], cap=acc["cap"], rule=acc["rule"])
         json.dump(summaries, open("data/live/accounts.json", "w"), indent=1)
     subprocess.run(py + [os.path.join(ROOT, "export_paper.py")], check=True, env=env, stdout=subprocess.DEVNULL)
+    subprocess.run(py + [os.path.join(ROOT, "apex", "page.py")], check=False, env=env, stdout=subprocess.DEVNULL)
     out = subprocess.run(py + [os.path.join(ROOT, "live_poll.py"), "--summary-only"], env=env, capture_output=True, text=True)
     return "\n".join(order_log + [out.stdout.strip()])
 

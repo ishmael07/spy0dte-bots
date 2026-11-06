@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from paper import BOTS, SIZING
+BOTS = {k: v for k, v in BOTS.items() if k != "apex"}   # Apex has its own tab (apex/page.py -> docs/apex.html)
 
 ET = ZoneInfo("America/New_York")
 URL_NOTE = "Paper money only · fills at real Robinhood option minute prices where available (+$0.02 slippage/side, $0.03/contract fees)"

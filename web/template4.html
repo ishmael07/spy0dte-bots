@@ -38,6 +38,9 @@ body { background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-s
 
 header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.tabs { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 3px; }
+.tabs a { font: 500 14px var(--f-ui); color: var(--muted); text-decoration: none; padding: 7px 14px; border-radius: 7px; }
+.tabs a[aria-current="page"] { background: var(--bg); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
 .brand h1 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
 .brand .num { color: var(--muted); font-size: 12px; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -238,6 +241,7 @@ tr.pick td { font-weight: 600; }
 <div class="wrap">
   <header>
     <div class="brand"><h1>SPY 0DTE Sniper</h1><span class="num" id="range"></span></div>
+    <nav class="tabs"><a href="index.html" aria-current="page">Learning bots</a><a href="apex.html">Apex</a></nav>
     <div class="controls">
       <div class="seg" id="segStrat" role="group" aria-label="Strategy"></div>
       <div class="seg" id="segPeriod" role="group" aria-label="Start date"></div>
@@ -255,7 +259,6 @@ tr.pick td { font-weight: 600; }
         <div class="lkey"><span>▲▼ buy &nbsp;● sell, numbered to match the cards</span><span><i style="border-color:var(--up)"></i>winning trade</span><span><i style="border-color:var(--down)"></i>losing trade</span></div></div>
       <aside class="lpos" id="lpos"></aside>
     </div>
-    <div class="apexd" id="apexd" hidden></div>
   </section>
 
   <section class="kpis" id="kpis"></section>
@@ -685,7 +688,6 @@ function renderLive(fit) {
       <div class="r3"><span class="ltag ${g.open ? "open" : ""}">${g.open ? "Open · live" : (WHY[g.reason] || g.reason)}</span>${g.alpaca ? alp(g.alpaca) : ""}</div>
     </button>`).join("") : `<div class="empty">No trades yet today${d.marketOpen ? " · bots are watching" : ""}.</div>`;
   for (const el of document.querySelectorAll("#lpos .lcard")) el.onclick = () => { LV.focus = el.dataset.id; renderLive(); };
-  try { renderApex(); } catch (e) { console.error("apex panel", e); }
   liveStatus();
 }
 

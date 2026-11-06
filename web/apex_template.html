@@ -1,0 +1,231 @@
+<title>Apex · SPY 0DTE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/*TOKENS*/
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 20px 16px 56px; display: grid; gap: 18px; }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+.up { color: var(--up); } .dn { color: var(--down); } .mut { color: var(--muted); }
+header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+header h1 { font-size: 20px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
+.tabs { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 3px; }
+.tabs a { font: 500 14px var(--f-ui); color: var(--muted); text-decoration: none; padding: 7px 14px; border-radius: 7px; }
+.tabs a[aria-current="page"] { background: var(--bg); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; min-width: 0; }
+h2 { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0 0 12px; }
+.hero { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.hero > div { background: var(--panel); padding: 16px; display: grid; gap: 6px; align-content: start; }
+.hero .k { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+.hero .v { font: 600 28px var(--f-num); letter-spacing: -.02em; }
+.hero .s { font-size: 13px; color: var(--muted); }
+.state { font-size: 17px; font-weight: 500; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--faint); margin-right: 8px; vertical-align: 1px; }
+.dot.on { background: var(--up); box-shadow: 0 0 0 4px var(--up-bg); }
+@media (max-width: 860px) { .hero { grid-template-columns: 1fr 1fr; } .hero > div:first-child { grid-column: 1 / -1; } }
+.seg { display: inline-flex; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 2px; }
+.seg button { font: 500 13px var(--f-ui); color: var(--muted); background: none; border: 0; padding: 5px 11px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--panel); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
+.row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.row h2 { margin: 0; }
+.levels { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+.levels b { color: var(--fg); font: 500 14px var(--f-num); }
+#chart { height: 380px; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+.cards { display: grid; gap: 10px; }
+.card { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; }
+.card .t { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.card .t b { font-size: 16px; }
+.card .p { font: 600 18px var(--f-num); }
+.tag { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; }
+ul.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; max-height: 360px; overflow: auto; }
+ul.log li { display: grid; grid-template-columns: 70px 1fr; gap: 8px; }
+ul.log .tm { font: 400 13px var(--f-num); color: var(--muted); }
+.empty { color: var(--muted); padding: 8px 0; }
+ul.log li.empty { display: block; }
+#equity { height: 260px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+td { padding: 9px 6px; border-bottom: 1px solid var(--grid); }
+td.r, th.r { text-align: right; }
+.tscroll { overflow-x: auto; }
+.books { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 860px) { .books { grid-template-columns: 1fr 1fr; } }
+.book { border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 4px; }
+.book b { font-size: 15px; }
+.book .v { font: 600 20px var(--f-num); }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 860px) { .facts { grid-template-columns: 1fr; } }
+.fact { border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 4px; }
+.fact .v { font: 600 24px var(--f-num); }
+.note { font-size: 14px; color: var(--muted); margin: 12px 0 0; }
+</style>
+<div class="wrap">
+  <header>
+    <h1>Apex</h1>
+    <nav class="tabs"><a href="index.html">Learning bots</a><a href="apex.html" aria-current="page">Apex</a></nav>
+  </header>
+
+  <section class="hero">
+    <div><span class="k">Right now</span><span class="state" id="state"></span><span class="s" id="upd"></span></div>
+    <div><span class="k">$500 account</span><span class="v" id="b500"></span><span class="s" id="d500"></span></div>
+    <div><span class="k">$100 account</span><span class="v" id="b100"></span><span class="s" id="d100"></span></div>
+    <div><span class="k">Size today</span><span class="v" id="dial"></span><span class="s" id="imp"></span></div>
+  </section>
+
+  <section class="panel">
+    <div class="row"><h2>Today</h2><div class="seg" id="capSeg"><button data-cap="500">$500</button><button data-cap="100">$100</button></div></div>
+    <div class="levels" id="levels"></div>
+    <div id="chart"></div>
+  </section>
+
+  <section class="grid2">
+    <div class="panel"><h2>Today's trades</h2><div class="cards" id="trades"></div></div>
+    <div class="panel"><h2>Engine log</h2><ul class="log" id="log"></ul></div>
+  </section>
+
+  <section class="panel"><h2 id="newsH">News desk</h2><div id="brief"></div><ul class="log" id="news"></ul></section>
+
+  <section class="panel">
+    <div class="row"><h2>Track record · recorded option prices since Oct 9</h2><div class="seg" id="capSeg2"><button data-cap="500">$500</button><button data-cap="100">$100</button></div></div>
+    <div id="equity"></div>
+    <div class="books" id="books" style="margin-top:14px"></div>
+    <div class="tscroll" style="margin-top:14px"><table id="hist"></table></div>
+  </section>
+
+  <section class="panel">
+    <h2>How it trades</h2>
+    <div class="books">
+      <div class="book"><b>Trend ride</b><span class="mut">First breakout of SPY's normal range from 10:00. Holds until SPY closes back inside, out by 3:45. Own lane, never blocked.</span></div>
+      <div class="book"><b>Opening range</b><span class="mut">Break of the 9:30–9:35 range. Target one range, stop at the middle, 30 min. Turns into a ride if the move keeps going.</span></div>
+      <div class="book"><b>Pullback scalp</b><span class="mut">On a trend day, buys the dip to the 20-minute average. Target 3 ATR, stop 2 ATR, 20 min.</span></div>
+      <div class="book"><b>Failed-breakout fade</b><span class="mut">When a breakout fails and SPY crosses VWAP the other way, trades the reversal. 20 min.</span></div>
+    </div>
+    <p class="note">Max 3 trades a day, done after 2 losers. Targets and stops act on the SPY tick. Size set at 9:33 by what the straddle costs: cheap options → full size, expensive → half or quarter, very expensive → sits out.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Research · 677 days of real 0DTE option prices</h2>
+    <div class="facts">
+      <div class="fact"><span class="mut">Design · Feb 2024 – Jun 2025</span><span class="v up">+17.9</span><span class="mut">full stakes · 12 of 16 months up</span></div>
+      <div class="fact"><span class="mut">Untouched test · Jul 2025 – Oct 2026</span><span class="v dn">−5.1</span><span class="mut">full stakes · calm market, small size</span></div>
+      <div class="fact"><span class="mut">Live month · Oct 9 – Nov 5</span><span class="v up">+12.6</span><span class="mut">full stakes · volatile market</span></div>
+    </div>
+    <p class="note">Strong when SPY trends, roughly flat to slightly negative when it's calm. Headline-reading AI scored 45–54% on direction over Sep–Nov 2026, so the news desk advises and is scored but doesn't trade yet.</p>
+  </section>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.0.8/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+const D = /*DATA*/null;
+const $ = (id) => document.getElementById(id);
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const esc = (x) => String(x ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+const usd = (x) => (x < 0 ? "−$" : "$") + Math.abs(x).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const sgnUsd = (x) => (x >= 0 ? "+" : "−") + "$" + Math.abs(x).toFixed(2);
+const NAME = { orb: "Opening range", ride: "Trend ride", pull: "Pullback scalp", fade: "Failed-breakout fade", "orb→ride": "Opening range → ride" };
+let cap = 500, A = D.apex, spy = D.spy || [], chart, cand, marks, lines = [];
+try { cap = +(localStorage.getItem("apexCap") || 500); } catch {}
+const etEpoch = (day, hms) => { if (!hms) return null; const [h, m, s] = hms.split(":").map(Number);
+  const probe = new Date(day + "T12:00:00Z"); const et = new Date(probe.toLocaleString("en-US", { timeZone: "America/New_York" }));
+  const diffH = Math.round((probe - et) / 3.6e6); return Date.UTC(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10), h + diffH, m, s || 0) / 1000; };
+const baseOpts = () => ({ layout: { background: { color: "transparent" }, textColor: css("--muted"), fontFamily: css("--f-num"), attributionLogo: false },
+  grid: { vertLines: { color: css("--grid") }, horzLines: { color: css("--grid") } }, rightPriceScale: { borderColor: css("--line") },
+  timeScale: { borderColor: css("--line"), timeVisible: true, secondsVisible: false }, crosshair: { mode: 0 }, autoSize: true,
+  localization: { timeFormatter: (t) => new Date(t * 1000).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }) } });
+
+function segs() {
+  for (const id of ["capSeg", "capSeg2"]) for (const b of $(id).querySelectorAll("button")) {
+    b.setAttribute("aria-pressed", +b.dataset.cap === cap);
+    b.onclick = () => { cap = +b.dataset.cap; try { localStorage.setItem("apexCap", cap); } catch {} render(); renderHistory(); };
+  }
+}
+
+function render() {
+  segs();
+  const a = A || {};
+  const pos = Object.values(a.positions || {}).filter(Boolean);
+  const open = D.marketOpen || (a.updated && Date.now() / 1000 - a.updated < 180);
+  $("state").innerHTML = `<span class="dot ${open ? "on" : ""}"></span>` + (pos.length ? pos.map((p) => `In a <b class="${p.side === "C" ? "up" : "dn"}">${p.side === "C" ? "CALL" : "PUT"}</b> · ${esc(NAME[p.book] || p.book)}`).join(" · ")
+    : open ? "Watching for a setup" : "Market closed");
+  $("upd").textContent = a.updated ? "updated " + new Date(a.updated * 1000).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit", second: "2-digit" }) + " ET" : "";
+  const led = D.ledger || {};
+  for (const c of [500, 100]) {
+    const L = (a.ledger && a.ledger[c]) || led[c] || { cash: c };
+    $("b" + c).textContent = usd(L.cash);
+    const today = (a.trades || []).filter((t) => t.cap === c && t.booked).reduce((s, t) => s + (t.pnl || 0), 0);
+    const tot = L.cash - c;
+    $("d" + c).innerHTML = `<span class="${tot >= 0 ? "up" : "dn"}">${sgnUsd(tot)}</span> since Nov 6 · today <span class="${today >= 0 ? "up" : "dn"}">${sgnUsd(today)}</span>`;
+  }
+  $("dial").textContent = a.dial == null ? "—" : a.dial === 0 ? "Sitting out" : a.dial + "×";
+  $("imp").textContent = a.imp ? `9:33 straddle prices a ${a.imp.toFixed(2)}% move` : "set at 9:33";
+  const lv = a.levels || {};
+  $("levels").innerHTML = [["SPY", a.spy ? (+a.spy).toFixed(2) : null], ["Call trigger", lv.ub], ["Put trigger", lv.lb], ["VWAP", lv.vwap],
+    ["Opening range", lv.orl ? `${lv.orl}–${lv.orh}` : null], ["5m / 15m trend", lv.st5 != null ? `${lv.st5 > 0 ? "▲" : "▼"} ${lv.st15 > 0 ? "▲" : "▼"}` : null]]
+    .filter(([, v]) => v != null).map(([k, v]) => `<span>${k} <b>${v}</b></span>`).join("");
+  // chart
+  if (!chart) { chart = LightweightCharts.createChart($("chart"), baseOpts());
+    cand = chart.addSeries(LightweightCharts.CandlestickSeries, { upColor: css("--up"), downColor: css("--down"), borderVisible: false, wickUpColor: css("--up"), wickDownColor: css("--down") });
+    marks = LightweightCharts.createSeriesMarkers(cand, []); }
+  cand.setData(spy.map((b) => ({ time: b[0], open: b[1], high: b[2], low: b[3], close: b[4] })));
+  for (const l of lines) cand.removePriceLine(l); lines = [];
+  const pl = (price, color, title, style = 1) => price && lines.push(cand.createPriceLine({ price, color, lineWidth: 1, lineStyle: style, axisLabelVisible: true, title }));
+  pl(lv.ub, css("--up"), "call trigger"); pl(lv.lb, css("--down"), "put trigger"); pl(lv.vwap, css("--vwap"), "VWAP", 2);
+  for (const p of pos) { pl(p.stop, css("--down"), "stop", 0); pl(p.target, css("--up"), "target", 0); }
+  const day = a.day || D.day;
+  const mine = (a.trades || []).filter((t) => t.cap === cap);
+  const times = spy.map((b) => b[0]);
+  const snap = (t) => times.length ? times.reduce((b, x) => (Math.abs(x - t) < Math.abs(b - t) ? x : b), times[0]) : t;
+  const mk = [];
+  mine.forEach((t, k) => { const ti = etEpoch(day, t.t_in), to = etEpoch(day, t.t_out);
+    if (ti) mk.push({ time: snap(ti - 60), position: t.side === "C" ? "belowBar" : "aboveBar", shape: t.side === "C" ? "arrowUp" : "arrowDown", color: css("--fg"), text: `#${k + 1} ${t.side === "C" ? "CALL" : "PUT"} ${t.strike}` });
+    if (to && t.booked) mk.push({ time: snap(to - 60), position: t.side === "C" ? "aboveBar" : "belowBar", shape: "circle", color: (t.pnl || 0) >= 0 ? css("--up") : css("--down"), text: `#${k + 1} ${sgnUsd(t.pnl || 0)}` }); });
+  mk.sort((x, y) => x.time - y.time); marks.setMarkers(mk);
+  // trades
+  $("trades").innerHTML = mine.length ? mine.map((t, k) => { const px = t.booked ? t.pnl : t.mark && t.fill_in ? (t.mark - t.fill_in) * 100 * (t.filled_qty || t.qty) : null;
+    return `<div class="card"><div class="t"><b>#${k + 1} <span class="${t.side === "C" ? "up" : "dn"}">${t.side === "C" ? "CALL" : "PUT"} ${t.strike}</span> ×${t.qty}</b><span class="p ${px == null ? "" : px >= 0 ? "up" : "dn"}">${px == null ? "" : sgnUsd(px)}</span></div>
+      <div class="mut">${esc(NAME[t.book] || t.book)} · bought ${esc(t.t_in)} @ ${(t.fill_in ?? t.quote_in?.[1] ?? 0).toFixed(2)}${t.booked ? ` · sold ${esc(t.t_out)} @ ${(t.fill_out ?? 0).toFixed(2)} (${t.pct ?? 0}%)` : t.mark ? ` · now ${t.mark.toFixed(2)}` : ""}</div>
+      <div><span class="tag">${t.booked ? esc(t.why || "closed") : "open"}</span>${t.stop ? ` <span class="tag">stop ${t.stop.toFixed(2)}</span>` : ""}${t.target ? ` <span class="tag">target ${t.target.toFixed(2)}</span>` : ""}</div></div>`; }).join("")
+    : `<div class="empty">No trades yet today.</div>`;
+  const ev = (a.events || []).filter((e) => !/stream (connected|dropped)/.test(e.msg)).slice(-60).reverse();
+  $("log").innerHTML = ev.map((e) => `<li><span class="tm">${esc(e.t)}</span><span>${esc(e.msg)}</span></li>`).join("") || `<li class="empty">Starts at 9:10 ET.</li>`;
+  // news
+  $("newsH").textContent = a.ai_on ? "News desk · Claude Haiku 5.5 reading headlines live" : "News desk · off";
+  const b = a.brief;
+  $("brief").innerHTML = b ? `<p style="margin:0 0 12px"><b>${esc(b.regime)}</b> · lean <b>${esc(b.lean)}</b> · trend-day odds <b>${esc(b.trend_day_odds)}</b> — ${esc(b.summary)}</p>` : "";
+  const reads = (a.ai || []).filter((r) => r.kind === "ai_read" && r.relevant).slice(-30).reverse();
+  $("news").innerHTML = reads.map((r) => `<li><span class="tm">${esc((r.et || r.t || "").slice(0, 5))}</span><span><b class="${r.direction === "up" ? "up" : r.direction === "down" ? "dn" : ""}">${r.direction === "up" ? "▲" : r.direction === "down" ? "▼" : "•"} ${esc(r.magnitude)}</b> ${esc(r.headline)}</span></li>`).join("")
+    || `<li class="empty">${a.ai_on ? "No market-moving headlines yet." : "Turns on with the next job."}</li>`;
+}
+
+let eq, eqS;
+function renderHistory() {
+  const tr = (D.sim[cap] || []);
+  if (!eq) { eq = LightweightCharts.createChart($("equity"), Object.assign(baseOpts(), { timeScale: { borderColor: css("--line"), timeVisible: false } }));
+    eqS = eq.addSeries(LightweightCharts.AreaSeries, { lineColor: css("--s1"), topColor: "rgba(57,135,229,.25)", bottomColor: "rgba(57,135,229,0)", lineWidth: 2 }); }
+  let bal = cap; const pts = [{ time: tr.length ? tr[0].tIn - 3600 : 0, value: cap }];
+  for (const t of tr) { bal += t.pnl; pts.push({ time: t.tOut, value: +bal.toFixed(2) }); }
+  const byT = new Map(); for (const p of pts) byT.set(p.time, p); eqS.setData([...byT.values()].sort((x, y) => x.time - y.time)); eq.timeScale().fitContent();
+  const by = {};
+  for (const t of tr) { const k = t.book.split("→")[0]; (by[k] ||= { n: 0, pnl: 0, w: 0 }); by[k].n++; by[k].pnl += t.pnl; by[k].w += t.pnl > 0; }
+  $("books").innerHTML = ["ride", "orb", "pull", "fade"].map((k) => { const v = by[k] || { n: 0, pnl: 0, w: 0 };
+    return `<div class="book"><b>${NAME[k]}</b><span class="v ${v.pnl >= 0 ? "up" : "dn"}">${sgnUsd(v.pnl)}</span><span class="mut">${v.n} trades · ${v.n ? Math.round(100 * v.w / v.n) : 0}% won</span></div>`; }).join("");
+  $("hist").innerHTML = `<tr><th>Day</th><th>Play</th><th>Contract</th><th class="r">In</th><th class="r">Out</th><th class="r">Return</th><th class="r">P&amp;L</th><th class="r">Balance</th></tr>` +
+    [...tr].reverse().map((t) => `<tr><td class="num">${t.day.slice(5)}</td><td>${esc(NAME[t.book] || t.book)}</td><td class="num"><span class="${t.side === "C" ? "up" : "dn"}">${t.side === "C" ? "C" : "P"}</span> ${t.strike} ×${t.qty}</td>
+      <td class="r num">${t.optIn.toFixed(2)}</td><td class="r num">${t.optOut.toFixed(2)}</td><td class="r num ${t.pct >= 0 ? "up" : "dn"}">${t.pct > 0 ? "+" : ""}${t.pct}%</td>
+      <td class="r num ${t.pnl >= 0 ? "up" : "dn"}">${sgnUsd(t.pnl)}</td><td class="r num">${usd(t.eq)}</td></tr>`).join("");
+}
+
+async function poll() {
+  let wait = 70000;
+  try {
+    const r = await fetch(D.liveUrl, { cache: "no-cache", headers: { Accept: "application/vnd.github.raw+json" } });
+    if (r.ok) { const L = await r.json(); if (L.apex) A = L.apex; if (L.spy) spy = L.spy; render(); }
+    else if (r.status === 403 || r.status === 429) { const reset = +r.headers.get("x-ratelimit-reset"); wait = Math.max(60000, reset * 1000 - Date.now() + 3000); }
+  } catch {}
+  setTimeout(poll, document.hidden ? Math.max(wait, 300000) : wait);
+}
+render(); renderHistory(); poll();
+</script>

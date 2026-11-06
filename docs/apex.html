@@ -1,0 +1,262 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head><body>
+<title>Apex · SPY 0DTE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+
+/* Layout: one column of instrument panels — leaderboard + stats, equity, session chart, fills */
+:root {
+  --bg: #f5f6f8; --panel: #ffffff; --line: #e3e6eb; --grid: #eef0f3;
+  --fg: #12151a; --muted: #6b7380; --faint: #9aa1ab;
+  --up: #16915f; --down: #d0413f; --up-bg: rgba(22,145,95,.12); --down-bg: rgba(208,65,63,.12);
+  --s1: #2a78d6; --s2: #eb6834; --s3: #4a3aa7; --s4: #eda100;
+  --orbh: #c99700; --orbl: #e0782b; --vwap: #8a5cd6; --ema-f: #16915f; --ema-s: #d0413f;
+  --focus: #2a78d6;
+  --f-ui: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-num: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0e11; --panel: #13161b; --line: #232830; --grid: #1a1e24;
+  --fg: #e6e9ee; --muted: #8b93a0; --faint: #5d6570;
+  --up: #3cc28a; --down: #f0605e; --up-bg: rgba(60,194,138,.14); --down-bg: rgba(240,96,94,.14);
+  --s1: #3987e5; --s2: #d95926; --s3: #9085e9; --s4: #c98500;
+  --orbh: #e3b52c; --orbl: #e88a45; --vwap: #a985f0; --ema-f: #3cc28a; --ema-s: #f0605e;
+  --focus: #3987e5; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #0c0e11; --panel: #13161b; --line: #232830; --grid: #1a1e24;
+  --fg: #e6e9ee; --muted: #8b93a0; --faint: #5d6570;
+  --up: #3cc28a; --down: #f0605e; --up-bg: rgba(60,194,138,.14); --down-bg: rgba(240,96,94,.14);
+  --s1: #3987e5; --s2: #d95926; --s3: #9085e9; --s4: #c98500;
+  --orbh: #e3b52c; --orbl: #e88a45; --vwap: #a985f0; --ema-f: #3cc28a; --ema-s: #f0605e;
+  --focus: #3987e5; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 20px 16px 56px; display: grid; gap: 18px; }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+.up { color: var(--up); } .dn { color: var(--down); } .mut { color: var(--muted); }
+header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+header h1 { font-size: 20px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
+.tabs { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 3px; }
+.tabs a { font: 500 14px var(--f-ui); color: var(--muted); text-decoration: none; padding: 7px 14px; border-radius: 7px; }
+.tabs a[aria-current="page"] { background: var(--bg); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; min-width: 0; }
+h2 { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0 0 12px; }
+.hero { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.hero > div { background: var(--panel); padding: 16px; display: grid; gap: 6px; align-content: start; }
+.hero .k { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+.hero .v { font: 600 28px var(--f-num); letter-spacing: -.02em; }
+.hero .s { font-size: 13px; color: var(--muted); }
+.state { font-size: 17px; font-weight: 500; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--faint); margin-right: 8px; vertical-align: 1px; }
+.dot.on { background: var(--up); box-shadow: 0 0 0 4px var(--up-bg); }
+@media (max-width: 860px) { .hero { grid-template-columns: 1fr 1fr; } .hero > div:first-child { grid-column: 1 / -1; } }
+.seg { display: inline-flex; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 2px; }
+.seg button { font: 500 13px var(--f-ui); color: var(--muted); background: none; border: 0; padding: 5px 11px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--panel); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
+.row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.row h2 { margin: 0; }
+.levels { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+.levels b { color: var(--fg); font: 500 14px var(--f-num); }
+#chart { height: 380px; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+.cards { display: grid; gap: 10px; }
+.card { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; }
+.card .t { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.card .t b { font-size: 16px; }
+.card .p { font: 600 18px var(--f-num); }
+.tag { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; }
+ul.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; max-height: 360px; overflow: auto; }
+ul.log li { display: grid; grid-template-columns: 70px 1fr; gap: 8px; }
+ul.log .tm { font: 400 13px var(--f-num); color: var(--muted); }
+.empty { color: var(--muted); padding: 8px 0; }
+ul.log li.empty { display: block; }
+#equity { height: 260px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+td { padding: 9px 6px; border-bottom: 1px solid var(--grid); }
+td.r, th.r { text-align: right; }
+.tscroll { overflow-x: auto; }
+.books { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 860px) { .books { grid-template-columns: 1fr 1fr; } }
+.book { border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 4px; }
+.book b { font-size: 15px; }
+.book .v { font: 600 20px var(--f-num); }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 860px) { .facts { grid-template-columns: 1fr; } }
+.fact { border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 4px; }
+.fact .v { font: 600 24px var(--f-num); }
+.note { font-size: 14px; color: var(--muted); margin: 12px 0 0; }
+</style>
+<div class="wrap">
+  <header>
+    <h1>Apex</h1>
+    <nav class="tabs"><a href="index.html">Learning bots</a><a href="apex.html" aria-current="page">Apex</a></nav>
+  </header>
+
+  <section class="hero">
+    <div><span class="k">Right now</span><span class="state" id="state"></span><span class="s" id="upd"></span></div>
+    <div><span class="k">$500 account</span><span class="v" id="b500"></span><span class="s" id="d500"></span></div>
+    <div><span class="k">$100 account</span><span class="v" id="b100"></span><span class="s" id="d100"></span></div>
+    <div><span class="k">Size today</span><span class="v" id="dial"></span><span class="s" id="imp"></span></div>
+  </section>
+
+  <section class="panel">
+    <div class="row"><h2>Today</h2><div class="seg" id="capSeg"><button data-cap="500">$500</button><button data-cap="100">$100</button></div></div>
+    <div class="levels" id="levels"></div>
+    <div id="chart"></div>
+  </section>
+
+  <section class="grid2">
+    <div class="panel"><h2>Today's trades</h2><div class="cards" id="trades"></div></div>
+    <div class="panel"><h2>Engine log</h2><ul class="log" id="log"></ul></div>
+  </section>
+
+  <section class="panel"><h2 id="newsH">News desk</h2><div id="brief"></div><ul class="log" id="news"></ul></section>
+
+  <section class="panel">
+    <div class="row"><h2>Track record · recorded option prices since Oct 9</h2><div class="seg" id="capSeg2"><button data-cap="500">$500</button><button data-cap="100">$100</button></div></div>
+    <div id="equity"></div>
+    <div class="books" id="books" style="margin-top:14px"></div>
+    <div class="tscroll" style="margin-top:14px"><table id="hist"></table></div>
+  </section>
+
+  <section class="panel">
+    <h2>How it trades</h2>
+    <div class="books">
+      <div class="book"><b>Trend ride</b><span class="mut">First breakout of SPY's normal range from 10:00. Holds until SPY closes back inside, out by 3:45. Own lane, never blocked.</span></div>
+      <div class="book"><b>Opening range</b><span class="mut">Break of the 9:30–9:35 range. Target one range, stop at the middle, 30 min. Turns into a ride if the move keeps going.</span></div>
+      <div class="book"><b>Pullback scalp</b><span class="mut">On a trend day, buys the dip to the 20-minute average. Target 3 ATR, stop 2 ATR, 20 min.</span></div>
+      <div class="book"><b>Failed-breakout fade</b><span class="mut">When a breakout fails and SPY crosses VWAP the other way, trades the reversal. 20 min.</span></div>
+    </div>
+    <p class="note">Max 3 trades a day, done after 2 losers. Targets and stops act on the SPY tick. Size set at 9:33 by what the straddle costs: cheap options → full size, expensive → half or quarter, very expensive → sits out.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Research · 677 days of real 0DTE option prices</h2>
+    <div class="facts">
+      <div class="fact"><span class="mut">Design · Feb 2024 – Jun 2025</span><span class="v up">+17.9</span><span class="mut">full stakes · 12 of 16 months up</span></div>
+      <div class="fact"><span class="mut">Untouched test · Jul 2025 – Oct 2026</span><span class="v dn">−5.1</span><span class="mut">full stakes · calm market, small size</span></div>
+      <div class="fact"><span class="mut">Live month · Oct 9 – Nov 5</span><span class="v up">+12.6</span><span class="mut">full stakes · volatile market</span></div>
+    </div>
+    <p class="note">Strong when SPY trends, roughly flat to slightly negative when it's calm. Headline-reading AI scored 45–54% on direction over Sep–Nov 2026, so the news desk advises and is scored but doesn't trade yet.</p>
+  </section>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.0.8/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+const D = {"liveUrl":"https://api.github.com/repos/ishmael07/spy0dte-bots/contents/live.json?ref=live","sim":{"100":[{"day":"2026-10-09","book":"pull","side":"C","strike":779,"qty":1,"optIn":0.17,"optOut":0.1,"pct":-41.2,"pnl":-7.0,"eq":93.0,"why":"STOP","tIn":1791556200,"tOut":1791556980},{"day":"2026-10-09","book":"pull","side":"C","strike":779,"qty":1,"optIn":0.14,"optOut":0.22,"pct":57.1,"pnl":8.0,"eq":101.0,"why":"TARGET","tIn":1791557160,"tOut":1791557580},{"day":"2026-10-09","book":"ride","side":"C","strike":780,"qty":3,"optIn":0.15,"optOut":0.12,"pct":-20.0,"pnl":-9.0,"eq":92.0,"why":"BAND","tIn":1791571920,"tOut":1791572280},{"day":"2026-10-12","book":"orb","side":"P","strike":775,"qty":1,"optIn":0.18,"optOut":0.19,"pct":5.6,"pnl":1.0,"eq":93.0,"why":"TARGET","tIn":1791812940,"tOut":1791814380},{"day":"2026-10-12","book":"pull","side":"C","strike":780,"qty":1,"optIn":0.13,"optOut":0.1,"pct":-23.1,"pnl":-3.0,"eq":90.0,"why":"STOP","tIn":1791822060,"tOut":1791822180},{"day":"2026-10-13","book":"orb","side":"C","strike":782,"qty":1,"optIn":0.12,"optOut":0.05,"pct":-58.3,"pnl":-7.0,"eq":83.0,"why":"STOP","tIn":1791898680,"tOut":1791900420},{"day":"2026-10-13","book":"fade","side":"P","strike":774,"qty":1,"optIn":0.18,"optOut":0.11,"pct":-38.9,"pnl":-7.0,"eq":76.0,"why":"STOP","tIn":1791900420,"tOut":1791901500},{"day":"2026-10-14","book":"ride","side":"P","strike":770,"qty":1,"optIn":0.3,"optOut":1.61,"pct":436.7,"pnl":131.0,"eq":207.0,"why":"TIME","tIn":1791986460,"tOut":1792007220},{"day":"2026-10-14","book":"orb\u2192ride","side":"P","strike":769,"qty":1,"optIn":0.13,"optOut":0.94,"pct":623.1,"pnl":81.0,"eq":288.0,"why":"TIME","tIn":1791986160,"tOut":1792007220},{"day":"2026-10-15","book":"orb","side":"P","strike":758,"qty":1,"optIn":0.33,"optOut":0.17,"pct":-48.5,"pnl":-16.0,"eq":272.0,"why":"STOP","tIn":1792072440,"tOut":1792072980},{"day":"2026-10-15","book":"fade","side":"C","strike":772,"qty":1,"optIn":0.27,"optOut":0.35,"pct":29.6,"pnl":8.0,"eq":280.0,"why":"CAP","tIn":1792072980,"tOut":1792074240},{"day":"2026-10-15","book":"ride","side":"C","strike":773,"qty":1,"optIn":0.64,"optOut":0.68,"pct":6.2,"pnl":4.0,"eq":284.0,"why":"BAND","tIn":1792077360,"tOut":1792077480},{"day":"2026-10-16","book":"ride","side":"P","strike":771,"qty":1,"optIn":1.32,"optOut":1.2,"pct":-9.1,"pnl":-12.0,"eq":272.0,"why":"BAND","tIn":1792159860,"tOut":1792159980},{"day":"2026-10-16","book":"pull","side":"P","strike":768,"qty":1,"optIn":0.6,"optOut":1.07,"pct":78.3,"pnl":47.0,"eq":319.0,"why":"TARGET","tIn":1792164960,"tOut":1792166160},{"day":"2026-10-16","book":"pull","side":"P","strike":766,"qty":1,"optIn":0.58,"optOut":0.87,"pct":50.0,"pnl":29.0,"eq":348.0,"why":"TARGET","tIn":1792167540,"tOut":1792168620},{"day":"2026-10-19","book":"orb","side":"C","strike":770,"qty":1,"optIn":0.69,"optOut":0.43,"pct":-37.7,"pnl":-26.0,"eq":322.0,"why":"STOP","tIn":1792419300,"tOut":1792420440},{"day":"2026-10-19","book":"fade","side":"P","strike":765,"qty":1,"optIn":0.59,"optOut":0.43,"pct":-27.1,"pnl":-16.0,"eq":306.0,"why":"STOP","tIn":1792420500,"tOut":1792421220},{"day":"2026-10-19","book":"ride","side":"C","strike":770,"qty":1,"optIn":0.96,"optOut":0.99,"pct":3.1,"pnl":3.0,"eq":309.0,"why":"BAND","tIn":1792423860,"tOut":1792424040},{"day":"2026-10-20","book":"orb","side":"P","strike":761,"qty":1,"optIn":0.65,"optOut":0.36,"pct":-44.6,"pnl":-29.0,"eq":280.0,"why":"STOP","tIn":1792503720,"tOut":1792504200},{"day":"2026-10-20","book":"fade","side":"C","strike":769,"qty":1,"optIn":0.44,"optOut":0.99,"pct":125.0,"pnl":55.0,"eq":335.0,"why":"TARGET","tIn":1792504200,"tOut":1792504800},{"day":"2026-10-20","book":"ride","side":"C","strike":768,"qty":1,"optIn":1.61,"optOut":1.47,"pct":-8.7,"pnl":-14.0,"eq":321.0,"why":"BAND","tIn":1792504860,"tOut":1792505160},{"day":"2026-10-21","book":"orb","side":"C","strike":773,"qty":1,"optIn":0.75,"optOut":0.6,"pct":-20.0,"pnl":-15.0,"eq":306.0,"why":"STOP","tIn":1792590480,"tOut":1792590900},{"day":"2026-10-21","book":"fade","side":"P","strike":768,"qty":1,"optIn":0.63,"optOut":1.1,"pct":74.6,"pnl":47.0,"eq":353.0,"why":"TARGET","tIn":1792590900,"tOut":1792591620},{"day":"2026-10-21","book":"ride","side":"C","strike":774,"qty":2,"optIn":0.81,"optOut":0.79,"pct":-2.5,"pnl":-4.0,"eq":349.0,"why":"BAND","tIn":1792602660,"tOut":1792602840},{"day":"2026-10-22","book":"orb","side":"P","strike":761,"qty":1,"optIn":0.39,"optOut":0.2,"pct":-48.7,"pnl":-19.0,"eq":330.0,"why":"STOP","tIn":1792676880,"tOut":1792677480},{"day":"2026-10-22","book":"fade","side":"C","strike":771,"qty":1,"optIn":0.4,"optOut":0.29,"pct":-27.5,"pnl":-11.0,"eq":319.0,"why":"STOP","tIn":1792677480,"tOut":1792678140},{"day":"2026-10-22","book":"ride","side":"P","strike":761,"qty":1,"optIn":0.63,"optOut":0.42,"pct":-33.3,"pnl":-21.0,"eq":298.0,"why":"BAND","tIn":1792679160,"tOut":1792682700},{"day":"2026-10-23","book":"orb","side":"P","strike":751,"qty":1,"optIn":0.29,"optOut":0.24,"pct":-17.2,"pnl":-5.0,"eq":293.0,"why":"STOP","tIn":1792762560,"tOut":1792762980},{"day":"2026-10-23","book":"fade","side":"C","strike":767,"qty":1,"optIn":0.34,"optOut":0.27,"pct":-20.6,"pnl":-7.0,"eq":286.0,"why":"CAP","tIn":1792762980,"tOut":1792764240},{"day":"2026-10-26","book":"ride","side":"C","strike":766,"qty":1,"optIn":0.63,"optOut":0.51,"pct":-19.0,"pnl":-12.0,"eq":274.0,"why":"BAND","tIn":1793023260,"tOut":1793023440},{"day":"2026-10-26","book":"orb","side":"C","strike":768,"qty":1,"optIn":0.3,"optOut":0.18,"pct":-40.0,"pnl":-12.0,"eq":262.0,"why":"CAP","tIn":1793021820,"tOut":1793023680},{"day":"2026-10-26","book":"pull","side":"C","strike":768,"qty":1,"optIn":0.29,"optOut":0.37,"pct":27.6,"pnl":8.0,"eq":270.0,"why":"TARGET","tIn":1793024880,"tOut":1793025960},{"day":"2026-10-27","book":"orb","side":"C","strike":770,"qty":1,"optIn":0.6,"optOut":0.29,"pct":-51.7,"pnl":-31.0,"eq":239.0,"why":"STOP","tIn":1793108280,"tOut":1793109000},{"day":"2026-10-27","book":"fade","side":"P","strike":764,"qty":1,"optIn":0.58,"optOut":0.62,"pct":6.9,"pnl":4.0,"eq":243.0,"why":"CAP","tIn":1793109000,"tOut":1793110260},{"day":"2026-10-27","book":"ride","side":"C","strike":770,"qty":1,"optIn":0.77,"optOut":0.79,"pct":2.6,"pnl":2.0,"eq":245.0,"why":"BAND","tIn":1793114460,"tOut":1793114640},{"day":"2026-10-29","book":"orb","side":"P","strike":761,"qty":1,"optIn":0.3,"optOut":0.19,"pct":-36.7,"pnl":-11.0,"eq":234.0,"why":"STOP","tIn":1793281140,"tOut":1793281440},{"day":"2026-10-29","book":"fade","side":"C","strike":775,"qty":1,"optIn":0.2,"optOut":0.26,"pct":30.0,"pnl":6.0,"eq":240.0,"why":"TARGET","tIn":1793281440,"tOut":1793282640},{"day":"2026-10-30","book":"orb","side":"P","strike":753,"qty":1,"optIn":0.3,"optOut":0.23,"pct":-23.3,"pnl":-7.0,"eq":233.0,"why":"STOP","tIn":1793367360,"tOut":1793367660},{"day":"2026-10-30","book":"fade","side":"C","strike":767,"qty":1,"optIn":0.23,"optOut":0.2,"pct":-13.0,"pnl":-3.0,"eq":230.0,"why":"CAP","tIn":1793367660,"tOut":1793368920},{"day":"2026-10-30","book":"ride","side":"P","strike":756,"qty":1,"optIn":0.47,"optOut":0.59,"pct":25.5,"pnl":12.0,"eq":242.0,"why":"BAND","tIn":1793369160,"tOut":1793371200},{"day":"2026-11-02","book":"orb","side":"C","strike":765,"qty":1,"optIn":0.28,"optOut":0.3,"pct":7.1,"pnl":2.0,"eq":244.0,"why":"TARGET","tIn":1793630520,"tOut":1793631300},{"day":"2026-11-02","book":"ride","side":"C","strike":764,"qty":1,"optIn":0.46,"optOut":0.45,"pct":-2.2,"pnl":-1.0,"eq":243.0,"why":"BAND","tIn":1793631660,"tOut":1793631780},{"day":"2026-11-02","book":"pull","side":"C","strike":766,"qty":1,"optIn":0.22,"optOut":0.42,"pct":90.9,"pnl":20.0,"eq":263.0,"why":"TARGET","tIn":1793631660,"tOut":1793632680},{"day":"2026-11-03","book":"ride","side":"C","strike":759,"qty":1,"optIn":0.47,"optOut":0.38,"pct":-19.1,"pnl":-9.0,"eq":254.0,"why":"BAND","tIn":1793719260,"tOut":1793719440},{"day":"2026-11-04","book":"ride","side":"C","strike":773,"qty":1,"optIn":0.27,"optOut":0.1,"pct":-63.0,"pnl":-17.0,"eq":237.0,"why":"BAND","tIn":1793804460,"tOut":1793805900},{"day":"2026-11-04","book":"orb\u2192ride","side":"C","strike":773,"qty":1,"optIn":0.15,"optOut":0.1,"pct":-33.3,"pnl":-5.0,"eq":232.0,"why":"BAND","tIn":1793803020,"tOut":1793805900},{"day":"2026-11-04","book":"pull","side":"C","strike":774,"qty":1,"optIn":0.1,"optOut":0.07,"pct":-30.0,"pnl":-3.0,"eq":229.0,"why":"STOP","tIn":1793806620,"tOut":1793807280},{"day":"2026-11-05","book":"ride","side":"P","strike":744,"qty":1,"optIn":0.47,"optOut":9.01,"pct":1817.0,"pnl":854.0,"eq":1083.0,"why":"TIME","tIn":1793890860,"tOut":1793911620},{"day":"2026-11-05","book":"orb\u2192ride","side":"P","strike":752,"qty":1,"optIn":0.25,"optOut":13.34,"pct":5236.0,"pnl":1309.0,"eq":2392.0,"why":"TIME","tIn":1793889420,"tOut":1793911620}],"500":[{"day":"2026-10-09","book":"pull","side":"C","strike":777,"qty":1,"optIn":0.72,"optOut":0.49,"pct":-31.9,"pnl":-23.0,"eq":477.0,"why":"STOP","tIn":1791556200,"tOut":1791556980},{"day":"2026-10-09","book":"pull","side":"C","strike":776,"qty":1,"optIn":1.19,"optOut":1.57,"pct":31.9,"pnl":38.0,"eq":515.0,"why":"TARGET","tIn":1791557160,"tOut":1791557580},{"day":"2026-10-09","book":"ride","side":"C","strike":779,"qty":4,"optIn":0.52,"optOut":0.38,"pct":-26.9,"pnl":-56.0,"eq":459.0,"why":"BAND","tIn":1791571920,"tOut":1791572280},{"day":"2026-10-12","book":"orb","side":"P","strike":778,"qty":1,"optIn":0.76,"optOut":0.9,"pct":18.4,"pnl":14.0,"eq":473.0,"why":"TARGET","tIn":1791812940,"tOut":1791814380},{"day":"2026-10-12","book":"pull","side":"C","strike":779,"qty":3,"optIn":0.35,"optOut":0.31,"pct":-11.4,"pnl":-12.0,"eq":461.0,"why":"STOP","tIn":1791822060,"tOut":1791822180},{"day":"2026-10-13","book":"orb","side":"C","strike":779,"qty":1,"optIn":0.8,"optOut":0.28,"pct":-65.0,"pnl":-52.0,"eq":409.0,"why":"STOP","tIn":1791898680,"tOut":1791900420},{"day":"2026-10-13","book":"fade","side":"P","strike":777,"qty":1,"optIn":0.75,"optOut":0.46,"pct":-38.7,"pnl":-29.0,"eq":380.0,"why":"STOP","tIn":1791900420,"tOut":1791901500},{"day":"2026-10-14","book":"ride","side":"P","strike":774,"qty":1,"optIn":1.51,"optOut":5.3,"pct":251.0,"pnl":379.0,"eq":759.0,"why":"TIME","tIn":1791986460,"tOut":1792007220},{"day":"2026-10-14","book":"orb\u2192ride","side":"P","strike":773,"qty":1,"optIn":0.75,"optOut":4.31,"pct":474.7,"pnl":356.0,"eq":1115.0,"why":"TIME","tIn":1791986160,"tOut":1792007220},{"day":"2026-10-15","book":"orb","side":"P","strike":763,"qty":1,"optIn":1.22,"optOut":0.63,"pct":-48.4,"pnl":-59.0,"eq":1056.0,"why":"STOP","tIn":1792072440,"tOut":1792072980},{"day":"2026-10-15","book":"fade","side":"C","strike":768,"qty":1,"optIn":1.21,"optOut":1.51,"pct":24.8,"pnl":30.0,"eq":1086.0,"why":"CAP","tIn":1792072980,"tOut":1792074240},{"day":"2026-10-15","book":"ride","side":"C","strike":771,"qty":1,"optIn":1.36,"optOut":1.43,"pct":5.1,"pnl":7.0,"eq":1093.0,"why":"BAND","tIn":1792077360,"tOut":1792077480},{"day":"2026-10-16","book":"ride","side":"P","strike":771,"qty":4,"optIn":1.32,"optOut":1.2,"pct":-9.1,"pnl":-48.0,"eq":1045.0,"why":"BAND","tIn":1792159860,"tOut":1792159980},{"day":"2026-10-16","book":"pull","side":"P","strike":769,"qty":2,"optIn":0.95,"optOut":1.59,"pct":67.4,"pnl":128.0,"eq":1173.0,"why":"TARGET","tIn":1792164960,"tOut":1792166160},{"day":"2026-10-16","book":"pull","side":"P","strike":767,"qty":3,"optIn":0.89,"optOut":1.31,"pct":47.2,"pnl":126.0,"eq":1299.0,"why":"TARGET","tIn":1792167540,"tOut":1792168620},{"day":"2026-10-19","book":"orb","side":"C","strike":768,"qty":2,"optIn":1.56,"optOut":1.11,"pct":-28.8,"pnl":-90.0,"eq":1209.0,"why":"STOP","tIn":1792419300,"tOut":1792420440},{"day":"2026-10-19","book":"fade","side":"P","strike":767,"qty":2,"optIn":1.18,"optOut":0.88,"pct":-25.4,"pnl":-60.0,"eq":1149.0,"why":"STOP","tIn":1792420500,"tOut":1792421220},{"day":"2026-10-19","book":"ride","side":"C","strike":770,"qty":5,"optIn":0.96,"optOut":0.99,"pct":3.1,"pnl":15.0,"eq":1164.0,"why":"BAND","tIn":1792423860,"tOut":1792424040},{"day":"2026-10-20","book":"orb","side":"P","strike":765,"qty":1,"optIn":1.98,"optOut":1.19,"pct":-39.9,"pnl":-79.0,"eq":1085.0,"why":"STOP","tIn":1792503720,"tOut":1792504200},{"day":"2026-10-20","book":"fade","side":"C","strike":766,"qty":1,"optIn":1.61,"optOut":2.75,"pct":70.8,"pnl":114.0,"eq":1199.0,"why":"TARGET","tIn":1792504200,"tOut":1792504800},{"day":"2026-10-20","book":"ride","side":"C","strike":768,"qty":3,"optIn":1.61,"optOut":1.47,"pct":-8.7,"pnl":-42.0,"eq":1157.0,"why":"BAND","tIn":1792504860,"tOut":1792505160},{"day":"2026-10-21","book":"orb","side":"C","strike":771,"qty":1,"optIn":1.63,"optOut":1.34,"pct":-17.8,"pnl":-29.0,"eq":1128.0,"why":"STOP","tIn":1792590480,"tOut":1792590900},{"day":"2026-10-21","book":"fade","side":"P","strike":770,"qty":2,"optIn":1.2,"optOut":1.97,"pct":64.2,"pnl":154.0,"eq":1282.0,"why":"TARGET","tIn":1792590900,"tOut":1792591620},{"day":"2026-10-21","book":"ride","side":"C","strike":774,"qty":7,"optIn":0.81,"optOut":0.79,"pct":-2.5,"pnl":-14.0,"eq":1268.0,"why":"BAND","tIn":1792602660,"tOut":1792602840},{"day":"2026-10-22","book":"orb","side":"P","strike":765,"qty":1,"optIn":1.42,"optOut":0.87,"pct":-38.7,"pnl":-55.0,"eq":1213.0,"why":"STOP","tIn":1792676880,"tOut":1792677480},{"day":"2026-10-22","book":"fade","side":"C","strike":768,"qty":1,"optIn":1.26,"optOut":0.95,"pct":-24.6,"pnl":-31.0,"eq":1182.0,"why":"STOP","tIn":1792677480,"tOut":1792678140},{"day":"2026-10-22","book":"ride","side":"P","strike":764,"qty":1,"optIn":1.61,"optOut":1.3,"pct":-19.3,"pnl":-31.0,"eq":1151.0,"why":"BAND","tIn":1792679160,"tOut":1792682700},{"day":"2026-10-23","book":"orb","side":"P","strike":757,"qty":1,"optIn":1.26,"optOut":1.11,"pct":-11.9,"pnl":-15.0,"eq":1136.0,"why":"STOP","tIn":1792762560,"tOut":1792762980},{"day":"2026-10-23","book":"fade","side":"C","strike":763,"qty":1,"optIn":1.19,"optOut":1.05,"pct":-11.8,"pnl":-14.0,"eq":1122.0,"why":"CAP","tIn":1792762980,"tOut":1792764240},{"day":"2026-10-26","book":"ride","side":"C","strike":764,"qty":2,"optIn":1.4,"optOut":1.18,"pct":-15.7,"pnl":-44.0,"eq":1078.0,"why":"BAND","tIn":1793023260,"tOut":1793023440},{"day":"2026-10-26","book":"orb","side":"C","strike":765,"qty":1,"optIn":1.04,"optOut":0.75,"pct":-27.9,"pnl":-29.0,"eq":1049.0,"why":"CAP","tIn":1793021820,"tOut":1793023680},{"day":"2026-10-26","book":"pull","side":"C","strike":765,"qty":1,"optIn":1.27,"optOut":1.6,"pct":26.0,"pnl":33.0,"eq":1082.0,"why":"TARGET","tIn":1793024880,"tOut":1793025960},{"day":"2026-10-27","book":"orb","side":"C","strike":768,"qty":1,"optIn":1.43,"optOut":0.71,"pct":-50.3,"pnl":-72.0,"eq":1010.0,"why":"STOP","tIn":1793108280,"tOut":1793109000},{"day":"2026-10-27","book":"fade","side":"P","strike":766,"qty":2,"optIn":1.21,"optOut":1.37,"pct":13.2,"pnl":32.0,"eq":1042.0,"why":"CAP","tIn":1793109000,"tOut":1793110260},{"day":"2026-10-27","book":"ride","side":"C","strike":770,"qty":6,"optIn":0.77,"optOut":0.79,"pct":2.6,"pnl":12.0,"eq":1054.0,"why":"BAND","tIn":1793114460,"tOut":1793114640},{"day":"2026-10-29","book":"orb","side":"P","strike":766,"qty":1,"optIn":1.31,"optOut":1.05,"pct":-19.8,"pnl":-26.0,"eq":1028.0,"why":"STOP","tIn":1793281140,"tOut":1793281440},{"day":"2026-10-29","book":"fade","side":"C","strike":771,"qty":1,"optIn":1.04,"optOut":1.17,"pct":12.5,"pnl":13.0,"eq":1041.0,"why":"TARGET","tIn":1793281440,"tOut":1793282640},{"day":"2026-10-30","book":"orb","side":"P","strike":758,"qty":1,"optIn":1.15,"optOut":0.97,"pct":-15.7,"pnl":-18.0,"eq":1023.0,"why":"STOP","tIn":1793367360,"tOut":1793367660},{"day":"2026-10-30","book":"fade","side":"C","strike":762,"qty":1,"optIn":1.26,"optOut":1.1,"pct":-12.7,"pnl":-16.0,"eq":1007.0,"why":"CAP","tIn":1793367660,"tOut":1793368920},{"day":"2026-10-30","book":"ride","side":"P","strike":760,"qty":1,"optIn":1.58,"optOut":2,"pct":26.6,"pnl":42.0,"eq":1049.0,"why":"BAND","tIn":1793369160,"tOut":1793371200},{"day":"2026-11-02","book":"orb","side":"C","strike":761,"qty":1,"optIn":1.28,"optOut":1.33,"pct":3.9,"pnl":5.0,"eq":1054.0,"why":"TARGET","tIn":1793630520,"tOut":1793631300},{"day":"2026-11-02","book":"ride","side":"C","strike":761,"qty":1,"optIn":1.4,"optOut":1.39,"pct":-0.7,"pnl":-1.0,"eq":1053.0,"why":"BAND","tIn":1793631660,"tOut":1793631780},{"day":"2026-11-02","book":"pull","side":"C","strike":762,"qty":1,"optIn":0.98,"optOut":1.66,"pct":69.4,"pnl":68.0,"eq":1121.0,"why":"TARGET","tIn":1793631660,"tOut":1793632680},{"day":"2026-11-03","book":"ride","side":"C","strike":755,"qty":1,"optIn":1.73,"optOut":1.43,"pct":-17.3,"pnl":-30.0,"eq":1091.0,"why":"BAND","tIn":1793719260,"tOut":1793719440},{"day":"2026-11-04","book":"ride","side":"C","strike":769,"qty":1,"optIn":1.36,"optOut":0.78,"pct":-42.6,"pnl":-58.0,"eq":1033.0,"why":"BAND","tIn":1793804460,"tOut":1793805900},{"day":"2026-11-04","book":"orb\u2192ride","side":"C","strike":770,"qty":1,"optIn":0.44,"optOut":0.48,"pct":9.1,"pnl":4.0,"eq":1037.0,"why":"BAND","tIn":1793803020,"tOut":1793805900},{"day":"2026-11-04","book":"pull","side":"C","strike":771,"qty":1,"optIn":0.43,"optOut":0.19,"pct":-55.8,"pnl":-24.0,"eq":1013.0,"why":"STOP","tIn":1793806620,"tOut":1793807280},{"day":"2026-11-05","book":"ride","side":"P","strike":752,"qty":1,"optIn":2.33,"optOut":13.34,"pct":472.5,"pnl":1101.0,"eq":2114.0,"why":"TIME","tIn":1793890860,"tOut":1793911620},{"day":"2026-11-05","book":"orb\u2192ride","side":"P","strike":758,"qty":1,"optIn":1.11,"optOut":19.25,"pct":1634.2,"pnl":1814.0,"eq":3928.0,"why":"TIME","tIn":1793889420,"tOut":1793911620}]},"ledger":{"100":{"cash":72.0},"500":{"cash":396.0}},"apex":{"day":"2026-11-06","events":[{"t":"09:15:49","msg":"stock stream connected"},{"t":"09:15:49","msg":"news stream connected (AI desk off: no ANTHROPIC_API_KEY)"},{"t":"09:15:49","msg":"option stream connected"},{"t":"09:31:02","msg":"day ready: open 734.85, prev close 733.13, 14-day noise at 10:00 \u00b10.26%"},{"t":"10:01:00","msg":"SIGNAL CALL at bar 30 close 741.05 (band 736.77/731.22, vwap 738.23)","kind":"enter","replay":false},{"t":"10:01:04","msg":"$100: BUY 1x SPY261106C00752000 ask 0.46 \u2192 pending_new","kind":"order"},{"t":"10:01:04","msg":"$500: BUY 1x SPY261106C00743000 ask 2.37 \u2192 pending_new","kind":"order"},{"t":"10:31:00","msg":"EXIT BAND at bar 60 close 738.34","kind":"exit","replay":false},{"t":"10:31:00","msg":"$100: SELL SPY261106C00752000 (BAND) \u2192 pending_new","kind":"order"},{"t":"10:31:00","msg":"$500: SELL SPY261106C00743000 (BAND) \u2192 pending_new","kind":"order"},{"t":"10:31:00","msg":"$100: closed SPY261106C00752000 -28.00 (-68.3%) \u2192 ledger $72.00","kind":"pnl"},{"t":"10:31:01","msg":"$500: closed SPY261106C00743000 -104.00 (-47.3%) \u2192 ledger $396.00","kind":"pnl"}],"ai":[],"trades":[],"shock":[],"levels":{"ub":739.74,"lb":728.25,"vwap":738.61,"call_exit":739.74,"put_exit":728.25},"spy":738.04,"bar":296,"position":null,"ledger":{"100":{"cash":72.0,"n":1},"500":{"cash":396.0,"n":1}},"ai_on":false,"updated":1793993278},"spy":[[1793957400,734.85,735.84,734.61,735.74],[1793957460,735.5,735.89,735.21,735.35],[1793957520,735.38,736.12,735.05,735.32],[1793957580,735.38,736.36,735.38,735.63],[1793957640,735.72,735.86,735.15,735.75],[1793957700,735.63,735.63,734.68,735.27],[1793957760,735.28,736.25,735.26,736.14],[1793957820,736.19,737.84,736.1,737.59],[1793957880,737.47,737.88,736.87,736.96],[1793957940,736.88,737.81,736.77,737.73],[1793958000,737.81,738.41,737.22,738.34],[1793958060,738.32,738.65,738.06,738.61],[1793958120,738.56,738.97,737.6,737.61],[1793958180,737.61,738.31,737.16,738.16],[1793958240,738.04,738.75,737.96,738.72],[1793958300,738.8,740.07,738.76,739.87],[1793958360,739.84,740.37,739.64,740.09],[1793958420,740.0,740.2,739.82,740.14],[1793958480,740.15,740.88,740.1,740.75],[1793958540,740.59,740.98,740.52,740.63],[1793958600,740.53,741.1,739.75,741.09],[1793958660,741.11,741.64,741.03,741.28],[1793958720,741.09,741.42,740.96,741.34],[1793958780,741.32,742.03,741.32,742.02],[1793958840,742.0,742.11,740.72,740.88],[1793958900,740.85,740.96,740.42,740.75],[1793958960,740.45,740.5,739.71,740.19],[1793959020,740.29,740.38,739.61,740.25],[1793959080,740.23,740.49,740.08,740.41],[1793959140,740.17,740.52,740.01,740.38],[1793959200,740.68,741.38,740.42,741.05],[1793959260,741.07,741.07,739.63,739.85],[1793959320,739.76,739.86,739.34,739.52],[1793959380,739.58,739.73,739.01,739.52],[1793959440,739.53,739.68,739.05,739.05]],"day":"2026-11-06","marketOpen":true};
+const $ = (id) => document.getElementById(id);
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const esc = (x) => String(x ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+const usd = (x) => (x < 0 ? "−$" : "$") + Math.abs(x).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const sgnUsd = (x) => (x >= 0 ? "+" : "−") + "$" + Math.abs(x).toFixed(2);
+const NAME = { orb: "Opening range", ride: "Trend ride", pull: "Pullback scalp", fade: "Failed-breakout fade", "orb→ride": "Opening range → ride" };
+let cap = 500, A = D.apex, spy = D.spy || [], chart, cand, marks, lines = [];
+try { cap = +(localStorage.getItem("apexCap") || 500); } catch {}
+const etEpoch = (day, hms) => { if (!hms) return null; const [h, m, s] = hms.split(":").map(Number);
+  const probe = new Date(day + "T12:00:00Z"); const et = new Date(probe.toLocaleString("en-US", { timeZone: "America/New_York" }));
+  const diffH = Math.round((probe - et) / 3.6e6); return Date.UTC(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10), h + diffH, m, s || 0) / 1000; };
+const baseOpts = () => ({ layout: { background: { color: "transparent" }, textColor: css("--muted"), fontFamily: css("--f-num"), attributionLogo: false },
+  grid: { vertLines: { color: css("--grid") }, horzLines: { color: css("--grid") } }, rightPriceScale: { borderColor: css("--line") },
+  timeScale: { borderColor: css("--line"), timeVisible: true, secondsVisible: false }, crosshair: { mode: 0 }, autoSize: true,
+  localization: { timeFormatter: (t) => new Date(t * 1000).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }) } });
+
+function segs() {
+  for (const id of ["capSeg", "capSeg2"]) for (const b of $(id).querySelectorAll("button")) {
+    b.setAttribute("aria-pressed", +b.dataset.cap === cap);
+    b.onclick = () => { cap = +b.dataset.cap; try { localStorage.setItem("apexCap", cap); } catch {} render(); renderHistory(); };
+  }
+}
+
+function render() {
+  segs();
+  const a = A || {};
+  const pos = Object.values(a.positions || {}).filter(Boolean);
+  const open = D.marketOpen || (a.updated && Date.now() / 1000 - a.updated < 180);
+  $("state").innerHTML = `<span class="dot ${open ? "on" : ""}"></span>` + (pos.length ? pos.map((p) => `In a <b class="${p.side === "C" ? "up" : "dn"}">${p.side === "C" ? "CALL" : "PUT"}</b> · ${esc(NAME[p.book] || p.book)}`).join(" · ")
+    : open ? "Watching for a setup" : "Market closed");
+  $("upd").textContent = a.updated ? "updated " + new Date(a.updated * 1000).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit", second: "2-digit" }) + " ET" : "";
+  const led = D.ledger || {};
+  for (const c of [500, 100]) {
+    const L = (a.ledger && a.ledger[c]) || led[c] || { cash: c };
+    $("b" + c).textContent = usd(L.cash);
+    const today = (a.trades || []).filter((t) => t.cap === c && t.booked).reduce((s, t) => s + (t.pnl || 0), 0);
+    const tot = L.cash - c;
+    $("d" + c).innerHTML = `<span class="${tot >= 0 ? "up" : "dn"}">${sgnUsd(tot)}</span> since Nov 6 · today <span class="${today >= 0 ? "up" : "dn"}">${sgnUsd(today)}</span>`;
+  }
+  $("dial").textContent = a.dial == null ? "—" : a.dial === 0 ? "Sitting out" : a.dial + "×";
+  $("imp").textContent = a.imp ? `9:33 straddle prices a ${a.imp.toFixed(2)}% move` : "set at 9:33";
+  const lv = a.levels || {};
+  $("levels").innerHTML = [["SPY", a.spy ? (+a.spy).toFixed(2) : null], ["Call trigger", lv.ub], ["Put trigger", lv.lb], ["VWAP", lv.vwap],
+    ["Opening range", lv.orl ? `${lv.orl}–${lv.orh}` : null], ["5m / 15m trend", lv.st5 != null ? `${lv.st5 > 0 ? "▲" : "▼"} ${lv.st15 > 0 ? "▲" : "▼"}` : null]]
+    .filter(([, v]) => v != null).map(([k, v]) => `<span>${k} <b>${v}</b></span>`).join("");
+  // chart
+  if (!chart) { chart = LightweightCharts.createChart($("chart"), baseOpts());
+    cand = chart.addSeries(LightweightCharts.CandlestickSeries, { upColor: css("--up"), downColor: css("--down"), borderVisible: false, wickUpColor: css("--up"), wickDownColor: css("--down") });
+    marks = LightweightCharts.createSeriesMarkers(cand, []); }
+  cand.setData(spy.map((b) => ({ time: b[0], open: b[1], high: b[2], low: b[3], close: b[4] })));
+  for (const l of lines) cand.removePriceLine(l); lines = [];
+  const pl = (price, color, title, style = 1) => price && lines.push(cand.createPriceLine({ price, color, lineWidth: 1, lineStyle: style, axisLabelVisible: true, title }));
+  pl(lv.ub, css("--up"), "call trigger"); pl(lv.lb, css("--down"), "put trigger"); pl(lv.vwap, css("--vwap"), "VWAP", 2);
+  for (const p of pos) { pl(p.stop, css("--down"), "stop", 0); pl(p.target, css("--up"), "target", 0); }
+  const day = a.day || D.day;
+  const mine = (a.trades || []).filter((t) => t.cap === cap);
+  const times = spy.map((b) => b[0]);
+  const snap = (t) => times.length ? times.reduce((b, x) => (Math.abs(x - t) < Math.abs(b - t) ? x : b), times[0]) : t;
+  const mk = [];
+  mine.forEach((t, k) => { const ti = etEpoch(day, t.t_in), to = etEpoch(day, t.t_out);
+    if (ti) mk.push({ time: snap(ti - 60), position: t.side === "C" ? "belowBar" : "aboveBar", shape: t.side === "C" ? "arrowUp" : "arrowDown", color: css("--fg"), text: `#${k + 1} ${t.side === "C" ? "CALL" : "PUT"} ${t.strike}` });
+    if (to && t.booked) mk.push({ time: snap(to - 60), position: t.side === "C" ? "aboveBar" : "belowBar", shape: "circle", color: (t.pnl || 0) >= 0 ? css("--up") : css("--down"), text: `#${k + 1} ${sgnUsd(t.pnl || 0)}` }); });
+  mk.sort((x, y) => x.time - y.time); marks.setMarkers(mk);
+  // trades
+  $("trades").innerHTML = mine.length ? mine.map((t, k) => { const px = t.booked ? t.pnl : t.mark && t.fill_in ? (t.mark - t.fill_in) * 100 * (t.filled_qty || t.qty) : null;
+    return `<div class="card"><div class="t"><b>#${k + 1} <span class="${t.side === "C" ? "up" : "dn"}">${t.side === "C" ? "CALL" : "PUT"} ${t.strike}</span> ×${t.qty}</b><span class="p ${px == null ? "" : px >= 0 ? "up" : "dn"}">${px == null ? "" : sgnUsd(px)}</span></div>
+      <div class="mut">${esc(NAME[t.book] || t.book)} · bought ${esc(t.t_in)} @ ${(t.fill_in ?? t.quote_in?.[1] ?? 0).toFixed(2)}${t.booked ? ` · sold ${esc(t.t_out)} @ ${(t.fill_out ?? 0).toFixed(2)} (${t.pct ?? 0}%)` : t.mark ? ` · now ${t.mark.toFixed(2)}` : ""}</div>
+      <div><span class="tag">${t.booked ? esc(t.why || "closed") : "open"}</span>${t.stop ? ` <span class="tag">stop ${t.stop.toFixed(2)}</span>` : ""}${t.target ? ` <span class="tag">target ${t.target.toFixed(2)}</span>` : ""}</div></div>`; }).join("")
+    : `<div class="empty">No trades yet today.</div>`;
+  const ev = (a.events || []).filter((e) => !/stream (connected|dropped)/.test(e.msg)).slice(-60).reverse();
+  $("log").innerHTML = ev.map((e) => `<li><span class="tm">${esc(e.t)}</span><span>${esc(e.msg)}</span></li>`).join("") || `<li class="empty">Starts at 9:10 ET.</li>`;
+  // news
+  $("newsH").textContent = a.ai_on ? "News desk · Claude Haiku 5.5 reading headlines live" : "News desk · off";
+  const b = a.brief;
+  $("brief").innerHTML = b ? `<p style="margin:0 0 12px"><b>${esc(b.regime)}</b> · lean <b>${esc(b.lean)}</b> · trend-day odds <b>${esc(b.trend_day_odds)}</b> — ${esc(b.summary)}</p>` : "";
+  const reads = (a.ai || []).filter((r) => r.kind === "ai_read" && r.relevant).slice(-30).reverse();
+  $("news").innerHTML = reads.map((r) => `<li><span class="tm">${esc((r.et || r.t || "").slice(0, 5))}</span><span><b class="${r.direction === "up" ? "up" : r.direction === "down" ? "dn" : ""}">${r.direction === "up" ? "▲" : r.direction === "down" ? "▼" : "•"} ${esc(r.magnitude)}</b> ${esc(r.headline)}</span></li>`).join("")
+    || `<li class="empty">${a.ai_on ? "No market-moving headlines yet." : "Turns on with the next job."}</li>`;
+}
+
+let eq, eqS;
+function renderHistory() {
+  const tr = (D.sim[cap] || []);
+  if (!eq) { eq = LightweightCharts.createChart($("equity"), Object.assign(baseOpts(), { timeScale: { borderColor: css("--line"), timeVisible: false } }));
+    eqS = eq.addSeries(LightweightCharts.AreaSeries, { lineColor: css("--s1"), topColor: "rgba(57,135,229,.25)", bottomColor: "rgba(57,135,229,0)", lineWidth: 2 }); }
+  let bal = cap; const pts = [{ time: tr.length ? tr[0].tIn - 3600 : 0, value: cap }];
+  for (const t of tr) { bal += t.pnl; pts.push({ time: t.tOut, value: +bal.toFixed(2) }); }
+  const byT = new Map(); for (const p of pts) byT.set(p.time, p); eqS.setData([...byT.values()].sort((x, y) => x.time - y.time)); eq.timeScale().fitContent();
+  const by = {};
+  for (const t of tr) { const k = t.book.split("→")[0]; (by[k] ||= { n: 0, pnl: 0, w: 0 }); by[k].n++; by[k].pnl += t.pnl; by[k].w += t.pnl > 0; }
+  $("books").innerHTML = ["ride", "orb", "pull", "fade"].map((k) => { const v = by[k] || { n: 0, pnl: 0, w: 0 };
+    return `<div class="book"><b>${NAME[k]}</b><span class="v ${v.pnl >= 0 ? "up" : "dn"}">${sgnUsd(v.pnl)}</span><span class="mut">${v.n} trades · ${v.n ? Math.round(100 * v.w / v.n) : 0}% won</span></div>`; }).join("");
+  $("hist").innerHTML = `<tr><th>Day</th><th>Play</th><th>Contract</th><th class="r">In</th><th class="r">Out</th><th class="r">Return</th><th class="r">P&amp;L</th><th class="r">Balance</th></tr>` +
+    [...tr].reverse().map((t) => `<tr><td class="num">${t.day.slice(5)}</td><td>${esc(NAME[t.book] || t.book)}</td><td class="num"><span class="${t.side === "C" ? "up" : "dn"}">${t.side === "C" ? "C" : "P"}</span> ${t.strike} ×${t.qty}</td>
+      <td class="r num">${t.optIn.toFixed(2)}</td><td class="r num">${t.optOut.toFixed(2)}</td><td class="r num ${t.pct >= 0 ? "up" : "dn"}">${t.pct > 0 ? "+" : ""}${t.pct}%</td>
+      <td class="r num ${t.pnl >= 0 ? "up" : "dn"}">${sgnUsd(t.pnl)}</td><td class="r num">${usd(t.eq)}</td></tr>`).join("");
+}
+
+async function poll() {
+  let wait = 70000;
+  try {
+    const r = await fetch(D.liveUrl, { cache: "no-cache", headers: { Accept: "application/vnd.github.raw+json" } });
+    if (r.ok) { const L = await r.json(); if (L.apex) A = L.apex; if (L.spy) spy = L.spy; render(); }
+    else if (r.status === 403 || r.status === 429) { const reset = +r.headers.get("x-ratelimit-reset"); wait = Math.max(60000, reset * 1000 - Date.now() + 3000); }
+  } catch {}
+  setTimeout(poll, document.hidden ? Math.max(wait, 300000) : wait);
+}
+render(); renderHistory(); poll();
+</script>
+
+</body></html>
