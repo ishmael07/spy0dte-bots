@@ -34,6 +34,12 @@ def build(H, today, path="data/live/live_today.json"):
                            price=float(p["current_price"]), pnl=float(p["unrealized_pl"]))
                       for p in (pos if code == 200 else []) if p.get("symbol", "").startswith("SPY")]
     L["account"] = orders.account_summary(H)
+    ap = f"data/live/apex_{today}.json"
+    if os.path.exists(ap):
+        try:
+            L["apex"] = json.load(open(ap))
+        except ValueError:
+            pass
     L["pushed"] = int(time.time())
     return L
 

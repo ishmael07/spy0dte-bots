@@ -193,6 +193,16 @@ tr.pick td { font-weight: 600; }
 #lpx { height: 400px; }
 .lpos { border-left: 1px solid var(--line); padding: 12px; display: grid; gap: 8px; align-content: start; max-height: 420px; overflow-y: auto; }
 @media (max-width: 900px) { .lpos { border-left: 0; border-top: 1px solid var(--line); max-height: none; } }
+.apexd { margin: 12px 4px 2px; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 10px; }
+.apexd h3 { margin: 0; font-size: 15px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.apexd h3 .st { font-weight: 500; color: var(--muted); font-size: 13px; }
+.apexd .lv { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+.apexd .lv b { color: var(--fg); font-variant-numeric: tabular-nums; }
+.apexd .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.apexd ul { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 13px; }
+.apexd li { line-height: 1.35; }
+.apexd .k { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.apexd .up { color: var(--up); } .apexd .dn { color: var(--down); }
 .lcard { text-align: left; font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; display: grid; gap: 7px; cursor: pointer; }
 .lcard:hover { border-color: var(--faint); }
 .lcard.sel { border-color: var(--fg); box-shadow: inset 0 0 0 1px var(--fg); }
@@ -245,6 +255,7 @@ tr.pick td { font-weight: 600; }
         <div class="lkey"><span>▲▼ buy &nbsp;● sell, numbered to match the cards</span><span><i style="border-color:var(--up)"></i>winning trade</span><span><i style="border-color:var(--down)"></i>losing trade</span></div></div>
       <aside class="lpos" id="lpos"></aside>
     </div>
+    <div class="apexd" id="apexd" hidden></div>
   </section>
 
   <section class="kpis" id="kpis"></section>
@@ -469,7 +480,7 @@ function renderTrade() {
     <div class="leg"><span class="lbl">Buy</span><span class="tm">${hhmm(t.tIn)}</span><span class="px">$${t.optIn.toFixed(2)}</span><span class="sub">SPY ${t.spyIn.toFixed(2)}</span></div>
     <div class="leg"><span class="lbl">Sell</span><span class="tm">${hhmm(t.tOut)}</span><span class="px">$${t.optOut.toFixed(2)}</span><span class="sub">SPY ${t.spyOut.toFixed(2)} · ${WHY[t.reason] || t.reason}</span></div>
     <dl class="rows"><dt>Held</dt><dd>${held} min</dd><dt>Stop (SPY)</dt><dd>${t.stopLvl.toFixed(2)}</dd><dt>Volume</dt><dd>${t.vol.toFixed(2)}× avg</dd>${t.half ? "<dt>Half sold</dt><dd>at +1.5 ATR</dd>" : ""}${t.addQty ? `<dt>Added</dt><dd>×${t.addQty} @ $${t.addPx.toFixed(2)}</dd>` : ""}<dt>Balance after</dt><dd>${money(t.eq)}</dd>${t.alpaca ? `<dt>Alpaca fills</dt><dd>${t.alpaca.buy != null ? "$" + t.alpaca.buy.toFixed(2) : "…"} → ${t.alpaca.sell != null ? "$" + t.alpaca.sell.toFixed(2) : (t.open ? "open" : "…")}</dd>${t.alpaca.pnl != null ? `<dt>Alpaca P&amp;L</dt><dd class="${cls(t.alpaca.pnl)}">${sgnUsd(t.alpaca.pnl)}</dd>` : ""}` : ""}</dl>
-    <div class="checks">${D.paper ? `<span class="chk" style="${t.fills === "real" ? "" : "background:var(--grid);color:var(--muted)"}">${t.fills === "real" ? "real option prices" : "modeled prices"}</span>` : ""}${t.kind ? `<span class="chk">${({ runner: "runner · Sniper+ setup", ride: "ride · Sniper+ setup", scalp: "scalp · Sniper setup", time_ride: "ride · no clock · Sniper+ setup", time_ride_b: "ride · no clock · Sniper setup", scalp_open: "scalp · no clock · Sniper setup", pullback1m: "1m pullback · 5m/15m/1h/50-day ✓" })[t.kind]}</span>` : ""}${["sniper_ppp", "sniper4", "time", "sniped1", "combined"].includes(state.rule) ? "" : state.rule === "daily" ? `<span class="chk">quality ${t.score}/10</span>` : '<span class="chk">5m ✓</span><span class="chk">15m ✓</span><span class="chk">1h ✓</span><span class="chk">vol ✓</span>' + (state.rule !== "sniper" ? '<span class="chk">50-day ✓</span>' : "") + (state.rule.endsWith("scalp") ? '<span class="chk">scalp</span>' : "")}</div>`;
+    <div class="checks">${D.paper ? `<span class="chk" style="${t.fills === "real" ? "" : "background:var(--grid);color:var(--muted)"}">${t.fills === "real" ? "real option prices" : "modeled prices"}</span>` : ""}${t.kind ? `<span class="chk">${({ runner: "runner · Sniper+ setup", ride: "ride · Sniper+ setup", scalp: "scalp · Sniper setup", time_ride: "ride · no clock · Sniper+ setup", time_ride_b: "ride · no clock · Sniper setup", scalp_open: "scalp · no clock · Sniper setup", pullback1m: "1m pullback · 5m/15m/1h/50-day ✓" })[t.kind]}</span>` : ""}${["sniper_ppp", "sniper4", "time", "sniped1", "combined", "noise", "noise_plus", "apex"].includes(state.rule) ? "" : state.rule === "daily" ? `<span class="chk">quality ${t.score}/10</span>` : '<span class="chk">5m ✓</span><span class="chk">15m ✓</span><span class="chk">1h ✓</span><span class="chk">vol ✓</span>' + (state.rule !== "sniper" ? '<span class="chk">50-day ✓</span>' : "") + (state.rule.endsWith("scalp") ? '<span class="chk">scalp</span>' : "")}</div>`;
   renderHud(null);
   renderEquity();
 }
@@ -674,7 +685,36 @@ function renderLive(fit) {
       <div class="r3"><span class="ltag ${g.open ? "open" : ""}">${g.open ? "Open · live" : (WHY[g.reason] || g.reason)}</span>${g.alpaca ? alp(g.alpaca) : ""}</div>
     </button>`).join("") : `<div class="empty">No trades yet today${d.marketOpen ? " · bots are watching" : ""}.</div>`;
   for (const el of document.querySelectorAll("#lpos .lcard")) el.onclick = () => { LV.focus = el.dataset.id; renderLive(); };
+  try { renderApex(); } catch (e) { console.error("apex panel", e); }
   liveStatus();
+}
+
+// Apex desk: the real-time engine's state (apex/stream.py) merged into live.json
+function renderApex() {
+  const a = LV.d && LV.d.apex, el = $("apexd");
+  if (!a) { el.hidden = true; return; }
+  el.hidden = false;
+  const lv = a.levels || {}, pos = a.position;
+  const st = pos ? `in a ${pos.side === "C" ? "CALL" : "PUT"} since ${pos.t || ""} · exits if SPY closes ${pos.side === "C" ? "below " + lv.call_exit : "above " + lv.put_exit}`
+    : (a.events || []).some((e) => e.kind === "enter") ? "done for today (one trade a day)" : "watching for the first breakout (checks every 5 min from 10:00)";
+  const led = Object.entries(a.ledger || {}).map(([c, v]) => `$${c} → <b>$${v.cash.toFixed(2)}</b>`).join(" · ");
+  const b = a.brief;
+  const reads = (a.ai || []).filter((r) => r.kind === "ai_read" && r.relevant).slice(-8).reverse();
+  const ev = (a.events || []).filter((e) => e.kind || /SIGNAL|EXIT|BUY|SELL|brief|day ready/.test(e.msg)).slice(-8).reverse();
+  const esc = (x) => String(x ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+  el.innerHTML = `<h3>Apex desk <span class="st">${esc(st)}</span></h3>
+    <div class="lv"><span>call trigger <b>${lv.ub ?? "—"}</b></span><span>put trigger <b>${lv.lb ?? "—"}</b></span><span>VWAP <b>${lv.vwap ?? "—"}</b></span><span>SPY <b>${a.spy ? (+a.spy).toFixed(2) : "—"}</b></span><span>ledgers ${led}</span></div>
+    <div class="cols">
+      <div><div class="k">News desk ${a.ai_on ? "· Claude reading headlines live" : "· off (no API key) — rules only"}</div>
+        ${b ? `<p style="margin:4px 0;font-size:13px"><b>${esc(b.regime)}</b> · lean <b>${esc(b.lean)}</b> · trend-day odds <b>${esc(b.trend_day_odds)}</b> — ${esc(b.summary)}</p>` : ""}
+        <ul>${reads.map((r) => `<li><span class="${r.direction === "up" ? "up" : r.direction === "down" ? "dn" : ""}">${r.direction === "up" ? "▲" : r.direction === "down" ? "▼" : "•"} ${esc(r.magnitude)}</span> ${esc(r.et || r.t)} ${esc(r.headline)}</li>`).join("") || '<li class="mut">no market-moving headlines yet</li>'}</ul></div>
+      <div><div class="k">Engine log</div><ul>${ev.map((e) => `<li><span class="mut">${esc(e.t)}</span> ${esc(e.msg)}</li>`).join("")}</ul></div>
+    </div>`;
+  if (LV.cand && lv.ub) {
+    LV.lines.push(LV.cand.createPriceLine({ price: lv.ub, color: css("--up"), lineWidth: 1, lineStyle: 1, axisLabelVisible: false, title: "Apex call trigger" }));
+    LV.lines.push(LV.cand.createPriceLine({ price: lv.lb, color: css("--down"), lineWidth: 1, lineStyle: 1, axisLabelVisible: false, title: "Apex put trigger" }));
+    LV.lines.push(LV.cand.createPriceLine({ price: lv.vwap, color: css("--vwap"), lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: "VWAP" }));
+  }
 }
 function liveStatus(next) {
   const d = LV.d;

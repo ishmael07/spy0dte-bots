@@ -48,6 +48,7 @@ BOTS = {
     "daily": ("Every day", "daily7", NEW_EXIT),
     "noise": ("Noise Area", "noise", None),
     "noise_plus": ("Noise Area+", "noise_plus", None),
+    "apex": ("Apex", "apex", None),
 }
 SIZING = {"all": 1.0, "half": 0.5, "quarter": 0.25}
 SLEEVES = {"all": (1.0, 0.5), "half": (0.5, 0.25), "quarter": (0.25, 0.1)}

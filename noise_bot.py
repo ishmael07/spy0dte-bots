@@ -31,7 +31,10 @@ CHECK = {955, 1025, 1055, 1125, 1155, 1225, 1255, 1325, 1355, 1425, 1455, 1525} 
 LAST_ENTRY = 1455
 SMART = dict(lock=(2.0, 0.4), fade=None, stall=None, late=(1400, 0.25))      # = time_bot.TIME's lock + late rules
 VARIANTS = {"noise": dict(fast=False, smart=False), "noise_fast": dict(fast=True, smart=False),
-            "noise_smart": dict(fast=False, smart=True), "noise_plus": dict(fast=True, smart=True)}
+            "noise_smart": dict(fast=False, smart=True), "noise_plus": dict(fast=True, smart=True),
+            # Apex (lab5, 2026-11-06): first breakout of the day only, checked every 5m, band/VWAP exit every bar,
+            # no option stops/locks. Leaderboard copy on the 5m engine; apex/stream.py trades it live on 1m bars.
+            "apex": dict(fast=True, smart=False, one=True, last=1455)}
 
 
 def bands(T):
@@ -69,7 +72,7 @@ def run(T, days, capital, frac, detail=False, acct_rule="none", sessions=None, b
         b, n = T.sim.base[d], len(T.sim.models[d].hm)
         j = b
         while j < b + n - 1:
-            if hm[j] > LAST_ENTRY or (v["smart"] and hm[j] >= SMART["late"][0]):   # no buys the theta rule would dump
+            if hm[j] > v.get("last", LAST_ENTRY) or (v["smart"] and hm[j] >= SMART["late"][0]):   # no buys the theta rule would dump
                 break
             side = None
             if is_check(hm[j]) and not np.isnan(ub[j]):
@@ -84,6 +87,8 @@ def run(T, days, capital, frac, detail=False, acct_rule="none", sessions=None, b
             A.book(d, t["cost"], t["pnl"])
             t["eq"] = round(A.equity(), 2)
             out.append(t)
+            if v.get("one"):
+                break
             j = t["xi"] if t["xi"] > j else j + 1      # the exit bar is itself a check: it may reverse at once
     return out, A.equity()
 

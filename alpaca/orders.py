@@ -83,6 +83,8 @@ def sync(H, today, now_et, state_file=STATE, only=None, label=""):
         elif len(parts) != 4:          # shared account mirrors the no-limit ledgers only
             continue
         phase, bot, cap, size = parts[:4]
+        if bot == "apex":              # Apex places its own orders in real time (apex/stream.py)
+            continue
         if phase != "live" or (only is None and (size != SIZE or int(cap) not in CAPS)):
             continue
         for t in trades:
