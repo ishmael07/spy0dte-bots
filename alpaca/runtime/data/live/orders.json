@@ -3578,7 +3578,15 @@
 "status": "filled",
 "fill": 2.34,
 "filled_qty": 2
-}
+},
+"sell": {
+"id": "f82f1fa8-e154-4bf3-a767-afdab59ad1b7",
+"status": "filled",
+"fill": 1.8,
+"filled_qty": 2
+},
+"sim_out": 1.58,
+"pnl": -108.0
 },
 "noise_plus-500-261106-C741-4282": {
 "bot": "noise_plus",
@@ -3592,6 +3600,14 @@
 "status": "filled",
 "fill": 2.33,
 "filled_qty": 2
-}
+},
+"sell": {
+"id": "82477c94-6ae5-4dfb-8351-30fe7d21eb16",
+"status": "filled",
+"fill": 1.8,
+"filled_qty": 2
+},
+"sim_out": 1.58,
+"pnl": -106.0
 }
 }
