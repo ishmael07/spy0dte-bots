@@ -480,7 +480,7 @@ function renderTrade() {
     <div class="leg"><span class="lbl">Buy</span><span class="tm">${hhmm(t.tIn)}</span><span class="px">$${t.optIn.toFixed(2)}</span><span class="sub">SPY ${t.spyIn.toFixed(2)}</span></div>
     <div class="leg"><span class="lbl">Sell</span><span class="tm">${hhmm(t.tOut)}</span><span class="px">$${t.optOut.toFixed(2)}</span><span class="sub">SPY ${t.spyOut.toFixed(2)} · ${WHY[t.reason] || t.reason}</span></div>
     <dl class="rows"><dt>Held</dt><dd>${held} min</dd><dt>Stop (SPY)</dt><dd>${t.stopLvl.toFixed(2)}</dd><dt>Volume</dt><dd>${t.vol.toFixed(2)}× avg</dd>${t.half ? "<dt>Half sold</dt><dd>at +1.5 ATR</dd>" : ""}${t.addQty ? `<dt>Added</dt><dd>×${t.addQty} @ $${t.addPx.toFixed(2)}</dd>` : ""}<dt>Balance after</dt><dd>${money(t.eq)}</dd>${t.alpaca ? `<dt>Alpaca fills</dt><dd>${t.alpaca.buy != null ? "$" + t.alpaca.buy.toFixed(2) : "…"} → ${t.alpaca.sell != null ? "$" + t.alpaca.sell.toFixed(2) : (t.open ? "open" : "…")}</dd>${t.alpaca.pnl != null ? `<dt>Alpaca P&amp;L</dt><dd class="${cls(t.alpaca.pnl)}">${sgnUsd(t.alpaca.pnl)}</dd>` : ""}` : ""}</dl>
-    <div class="checks">${D.paper ? `<span class="chk" style="${t.fills === "real" ? "" : "background:var(--grid);color:var(--muted)"}">${t.fills === "real" ? "real option prices" : "modeled prices"}</span>` : ""}${t.kind ? `<span class="chk">${({ runner: "runner · Sniper+ setup", ride: "ride · Sniper+ setup", scalp: "scalp · Sniper setup", time_ride: "ride · no clock · Sniper+ setup", time_ride_b: "ride · no clock · Sniper setup", scalp_open: "scalp · no clock · Sniper setup", pullback1m: "1m pullback · 5m/15m/1h/50-day ✓" })[t.kind]}</span>` : ""}${["sniper_ppp", "sniper4", "time", "sniped1", "combined", "noise", "noise_plus", "apex"].includes(state.rule) ? "" : state.rule === "daily" ? `<span class="chk">quality ${t.score}/10</span>` : '<span class="chk">5m ✓</span><span class="chk">15m ✓</span><span class="chk">1h ✓</span><span class="chk">vol ✓</span>' + (state.rule !== "sniper" ? '<span class="chk">50-day ✓</span>' : "") + (state.rule.endsWith("scalp") ? '<span class="chk">scalp</span>' : "")}</div>`;
+    <div class="checks">${D.paper ? `<span class="chk" style="${t.fills === "real" ? "" : "background:var(--grid);color:var(--muted)"}">${t.fills === "real" ? "real option prices" : "modeled prices"}</span>` : ""}${t.book ? `<span class="chk">${({ orb: "opening range", ride: "trend ride", pull: "pullback scalp", fade: "failed-breakout fade", "orb→ride": "opening range → ride" })[t.book] || t.book}</span>` : ""}${t.kind ? `<span class="chk">${({ runner: "runner · Sniper+ setup", ride: "ride · Sniper+ setup", scalp: "scalp · Sniper setup", time_ride: "ride · no clock · Sniper+ setup", time_ride_b: "ride · no clock · Sniper setup", scalp_open: "scalp · no clock · Sniper setup", pullback1m: "1m pullback · 5m/15m/1h/50-day ✓" })[t.kind]}</span>` : ""}${["sniper_ppp", "sniper4", "time", "sniped1", "combined", "noise", "noise_plus", "apex"].includes(state.rule) ? "" : state.rule === "daily" ? `<span class="chk">quality ${t.score}/10</span>` : '<span class="chk">5m ✓</span><span class="chk">15m ✓</span><span class="chk">1h ✓</span><span class="chk">vol ✓</span>' + (state.rule !== "sniper" ? '<span class="chk">50-day ✓</span>' : "") + (state.rule.endsWith("scalp") ? '<span class="chk">scalp</span>' : "")}</div>`;
   renderHud(null);
   renderEquity();
 }
@@ -694,16 +694,27 @@ function renderApex() {
   const a = LV.d && LV.d.apex, el = $("apexd");
   if (!a) { el.hidden = true; return; }
   el.hidden = false;
-  const lv = a.levels || {}, pos = a.position;
-  const st = pos ? `in a ${pos.side === "C" ? "CALL" : "PUT"} since ${pos.t || ""} · exits if SPY closes ${pos.side === "C" ? "below " + lv.call_exit : "above " + lv.put_exit}`
-    : (a.events || []).some((e) => e.kind === "enter") ? "done for today (one trade a day)" : "watching for the first breakout (checks every 5 min from 10:00)";
+  const esc = (x) => String(x ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+  const NAME = { orb: "opening range", ride: "trend ride", pull: "pullback scalp", fade: "failed-breakout fade", "orb→ride": "opening range → ride" };
+  const lv = a.levels || {}, pos = a.positions || {};
+  const open = Object.entries(pos).filter(([, p]) => p);
+  const st = open.length ? open.map(([k, p]) => `${k === "A" ? "Ride lane" : "Scalp lane"}: ${p.side === "C" ? "CALL" : "PUT"} (${NAME[p.book] || p.book})` +
+      (p.stop ? ` · stop ${p.stop.toFixed(2)}` : "") + (p.target ? ` · target ${p.target.toFixed(2)}` : "")).join(" · ")
+    : "watching — opening range from 9:35, trend ride from 10:00, scalps on pullbacks/failed breakouts";
   const led = Object.entries(a.ledger || {}).map(([c, v]) => `$${c} → <b>$${v.cash.toFixed(2)}</b>`).join(" · ");
+  const dial = a.dial == null ? "—" : a.dial === 0 ? "0 (sitting out: options too expensive)" : `${a.dial}×`;
   const b = a.brief;
   const reads = (a.ai || []).filter((r) => r.kind === "ai_read" && r.relevant).slice(-8).reverse();
-  const ev = (a.events || []).filter((e) => e.kind || /SIGNAL|EXIT|BUY|SELL|brief|day ready/.test(e.msg)).slice(-8).reverse();
-  const esc = (x) => String(x ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+  const trades = (a.trades || []).filter((t) => t.cap === state.cap);
+  const ev = (a.events || []).filter((e) => e.kind || /dial|ready|brief/.test(e.msg)).slice(-10).reverse();
   el.innerHTML = `<h3>Apex desk <span class="st">${esc(st)}</span></h3>
-    <div class="lv"><span>call trigger <b>${lv.ub ?? "—"}</b></span><span>put trigger <b>${lv.lb ?? "—"}</b></span><span>VWAP <b>${lv.vwap ?? "—"}</b></span><span>SPY <b>${a.spy ? (+a.spy).toFixed(2) : "—"}</b></span><span>ledgers ${led}</span></div>
+    <div class="lv"><span>SPY <b>${a.spy ? (+a.spy).toFixed(2) : "—"}</b></span><span>call trigger <b>${lv.ub ?? "—"}</b></span><span>put trigger <b>${lv.lb ?? "—"}</b></span>
+      <span>VWAP <b>${lv.vwap ?? "—"}</b></span><span>opening range <b>${lv.orl ?? "—"}–${lv.orh ?? "—"}</b></span>
+      <span>5m/15m trend <b>${lv.st5 > 0 ? "▲" : lv.st5 < 0 ? "▼" : "—"}${lv.st15 > 0 ? "▲" : lv.st15 < 0 ? "▼" : "—"}</b></span>
+      <span>9:33 straddle <b>${a.imp ? a.imp.toFixed(2) + "%" : "—"}</b> → size <b>${dial}</b></span><span>ledgers ${led}</span></div>
+    ${trades.length ? `<ul>${trades.map((t) => `<li><b class="${t.side === "C" ? "up" : "dn"}">${t.side === "C" ? "CALL" : "PUT"} ${t.strike}</b> ×${t.qty} · ${esc(NAME[t.book] || t.book)} · in ${esc(t.t_in)} @ ${(t.fill_in ?? t.quote_in?.[1] ?? 0).toFixed(2)}` +
+        (t.booked ? ` → out ${esc(t.t_out || "")} @ ${(t.fill_out ?? 0).toFixed(2)} <b class="${(t.pnl ?? 0) >= 0 ? "up" : "dn"}">${(t.pnl ?? 0) >= 0 ? "+" : ""}$${(t.pnl ?? 0).toFixed(2)} (${t.pct ?? 0}%)</b> ${esc(t.why || "")}`
+                  : ` → <b>open</b>${t.mark ? ` · now ${t.mark.toFixed(2)}` : ""}`) + `</li>`).join("")}</ul>` : ""}
     <div class="cols">
       <div><div class="k">News desk ${a.ai_on ? "· Claude reading headlines live" : "· off (no API key) — rules only"}</div>
         ${b ? `<p style="margin:4px 0;font-size:13px"><b>${esc(b.regime)}</b> · lean <b>${esc(b.lean)}</b> · trend-day odds <b>${esc(b.trend_day_odds)}</b> — ${esc(b.summary)}</p>` : ""}
@@ -714,6 +725,10 @@ function renderApex() {
     LV.lines.push(LV.cand.createPriceLine({ price: lv.ub, color: css("--up"), lineWidth: 1, lineStyle: 1, axisLabelVisible: false, title: "Apex call trigger" }));
     LV.lines.push(LV.cand.createPriceLine({ price: lv.lb, color: css("--down"), lineWidth: 1, lineStyle: 1, axisLabelVisible: false, title: "Apex put trigger" }));
     LV.lines.push(LV.cand.createPriceLine({ price: lv.vwap, color: css("--vwap"), lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: "VWAP" }));
+  }
+  for (const [, p] of open) {
+    if (p.stop) LV.lines.push(LV.cand.createPriceLine({ price: p.stop, color: css("--down"), lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: "Apex stop" }));
+    if (p.target) LV.lines.push(LV.cand.createPriceLine({ price: p.target, color: css("--up"), lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: "Apex target" }));
   }
 }
 function liveStatus(next) {

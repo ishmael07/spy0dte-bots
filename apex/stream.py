@@ -1,17 +1,19 @@
-"""Apex live engine: websocket streams in, paper orders out, decisions the instant a bar closes.
+"""Apex v2 live engine: websocket streams in, paper orders out, decisions the instant a bar closes.
 
 Streams (Alpaca, free plan):
-  stocks  wss://stream.data.alpaca.markets/v2/iex          SPY trades (tick price) + 1-minute bars
+  stocks  wss://stream.data.alpaca.markets/v2/iex              SPY trades (tick price) + 1-minute bars
   options wss://stream.data.alpaca.markets/v1beta1/indicative  live bid/ask for the strikes around the money (msgpack)
-  news    wss://stream.data.alpaca.markets/v1beta1/news    Benzinga headlines -> Claude news desk (ai.py)
+  news    wss://stream.data.alpaca.markets/v1beta1/news        Benzinga headlines -> Claude news desk (ai.py)
 
-Rules: core.py (validated in ~/spy0dte-backtest/lab5). Orders: two ledgers in the shared Alpaca paper account,
-$100 and $500, each risking 50% of its equity per trade (premium = max loss), client_order_id
-apex-{cap}-{yymmdd}-{b|s} so a restart can never double-buy. Restart-safe: on start it replays today's bars
-through the rules (deterministic) and resumes from the persisted ledger.
+Rules: core.py, two lanes (A = trend ride, B = opening range / pullback / fade scalps), at most 3 trades a day,
+sized by the 9:33 straddle dial. Same Session code as the lab parity test and the leaderboard sim (sim.py).
+Orders: $100 and $500 ledgers in the shared Alpaca paper account, 50% of ledger equity x dial x lane weight,
+client_order_id apex-{cap}-{yymmdd}-{lane}{n}-{b|s} so a restart can never double-buy. Restart-safe: on start it
+replays today's bars through the rules and resumes from the persisted ledger.
+Tick guard: if SPY trades 0.15% through a position's stop level between bar closes, it sells at once.
 
-The AI desk is advisory: its reads, the pre-market brief, and the paper-only "shock" ledger are logged and scored
-forward. APEX_AI_VETO=1 lets a fresh, large, opposite headline block a new entry (off by default until scored).
+AI desk (advisory): pre-market brief, a read on every market-moving headline, a paper-only "shock" ledger, all logged
+and scored forward. APEX_AI_VETO=1 lets a fresh, large, opposite headline block a new entry (off by default).
 
   python3 apex/stream.py --env ~/dawn-raid/.env [--max-minutes 340] [--dry]
 """
@@ -40,9 +42,9 @@ WS_OPT = "wss://stream.data.alpaca.markets/v1beta1/indicative"
 WS_NEWS = "wss://stream.data.alpaca.markets/v1beta1/news"
 CAPS = (100, 500)
 FRAC = 0.5
-EDGE = 0.03
-SHOCK_MOVE = 0.0015          # shock ledger: SPY must confirm the headline by 0.15% within 2 minutes
-SHOCK_HOLD = 30              # minutes
+TICK_GUARD = 0.0015
+SHOCK_MOVE = 0.0015
+SHOCK_HOLD = 30
 
 
 def now_et():
@@ -53,136 +55,120 @@ def minute_index(t):
     return (t.hour * 60 + t.minute) - (9 * 60 + 30)
 
 
+def t_closed(i):
+    return minute_index(now_et()) > i
+
+
 class Apex:
     def __init__(self, H, dry=False):
         self.H, self.dry = H, dry
         self.today = now_et().strftime("%Y-%m-%d")
+        self.ymd = self.today[2:].replace("-", "")
         self.path = os.path.join(LIVE, f"apex_{self.today}.json")
         self.ledger_path = os.path.join(LIVE, "apex_ledger.json")
-        self.S = json.load(open(self.path)) if os.path.exists(self.path) else dict(day=self.today, events=[], ai=[], trades=[], shock=[])
+        self.S = json.load(open(self.path)) if os.path.exists(self.path) else dict(day=self.today, events=[], ai=[], shock=[])
+        self.S.setdefault("shock", [])
         self.L = json.load(open(self.ledger_path)) if os.path.exists(self.ledger_path) else {str(c): dict(cash=float(c), trades=[]) for c in CAPS}
+        # v1 -> v2 hand-over: a v1 trade from today is the ride lane's first trade (same rule), so v2 manages its exit
+        for led in self.L.values():
+            for rec in led["trades"]:
+                if rec.get("day") == self.today and "lane" not in rec:
+                    rec.update(lane="A", n=1, book="ride", tag=rec["tag"] + "-A1")
         self.desk = Desk(self.log_ai)
-        self.day = None
+        self.lanes = None
+        self.imp = self.S.get("imp")            # 9:33 straddle, persisted so a restart keeps the same size dial
         self.last_i = -1
-        self.tick = None             # last SPY trade price
-        self.tick_t = 0.0
-        self.quotes = {}             # occ symbol -> (bid, ask, ts)
+        self.tick = None
+        self.quotes = {}
         self.opt_ws = None
         self.opt_subs = set()
-        self.reads = []              # recent AI reads (for veto / shock)
+        self.reads = []
         self.dirty = True
 
     # ------------------------------------------------------------------ persistence
     def event(self, msg, **kw):
         rec = dict(t=now_et().strftime("%H:%M:%S"), msg=msg, **kw)
-        self.S["events"].append(rec)
-        self.S["events"] = self.S["events"][-300:]
+        self.S["events"] = (self.S["events"] + [rec])[-300:]
         print(rec["t"], msg, flush=True)
         self.dirty = True
 
     def log_ai(self, rec):
         rec = dict(rec, t=now_et().strftime("%H:%M:%S"))
-        self.S["ai"].append(rec)
-        self.S["ai"] = self.S["ai"][-200:]
+        self.S["ai"] = (self.S["ai"] + [rec])[-200:]
         print(rec["t"], "AI", json.dumps(rec)[:300], flush=True)
         self.dirty = True
+
+    def today_trades(self):
+        return [t for led in self.L.values() for t in led["trades"] if t["day"] == self.today]
 
     def save(self):
         if not self.dirty:
             return
         st = dict(self.S)
-        if self.day:
-            i = max(self.last_i, 0)
-            st["levels"] = self.day.levels(min(i, 389)) if self.day.closes else None
-            st["spy"] = self.tick or (self.day.closes[-1] if self.day.closes else None)
+        A = self.lanes["A"] if self.lanes else None
+        if A and A.c:
+            st["levels"] = A.levels()
+            st["spy"] = self.tick or A.c[-1]
             st["bar"] = self.last_i
-            st["position"] = self.day.position
+            st["positions"] = {k: (dict(book=S.pos["book"], side=S.pos["side"], i=S.pos["i"], spy_in=S.pos["spy_in"],
+                                        stop=S.pos["ex"].get("sl"), target=S.pos["ex"].get("tp")) if S.pos else None)
+                               for k, S in self.lanes.items()}
+            st["imp"], st["dial"] = self.imp, core.dial(self.imp) if self.last_i >= 3 else None
+            st["lane_trades"] = {k: [dict(n=t["n"], book=t["book"], side=t["side"], i=t["i"], j=t.get("j"), why=t.get("why"),
+                                          ret=t.get("ret")) for t in S.trades] for k, S in self.lanes.items()}
         st["ledger"] = {c: dict(cash=round(v["cash"], 2), n=len(v["trades"])) for c, v in self.L.items()}
+        st["trades"] = self.today_trades()
         st["ai_on"] = self.desk.on
         st["updated"] = int(time.time())
         for p, obj in ((self.path, st), (self.ledger_path, self.L)):
-            tmp = p + ".tmp"
-            json.dump(obj, open(tmp, "w"), separators=(",", ":"))
-            os.replace(tmp, p)
+            json.dump(obj, open(p + ".tmp", "w"), separators=(",", ":"))
+            os.replace(p + ".tmp", p)
         self.dirty = False
 
     # ------------------------------------------------------------------ setup
     def history(self):
-        """sigma profile from the last 14 full sessions (SIP 1m, history is >15 min old) + prior close."""
-        start = (now_et() - timedelta(days=30)).strftime("%Y-%m-%dT00:00:00Z")
-        end = (now_et().replace(hour=0, minute=0, second=0, microsecond=0)).astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-        bars = feed.bars(self.H, "SPY", "1Min", start, end, feed="sip")
+        """sigma (last 14 sessions), prior close, completed 5m/15m blocks (SIP 1m, >15 min old), today's last bar index"""
+        start = (now_et() - timedelta(days=45)).strftime("%Y-%m-%dT00:00:00Z")
+        end = now_et().replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         sess = {}
-        for b in bars:
+        for b in feed.bars(self.H, "SPY", "1Min", start, end, feed="sip"):
             t = datetime.fromisoformat(b["t"].replace("Z", "+00:00")).astimezone(ET)
             i = minute_index(t)
             if 0 <= i < 390:
-                d = t.strftime("%Y-%m-%d")
-                sess.setdefault(d, {})[i] = b
-        days = [d for d in sorted(sess) if len(sess[d]) >= 300 and d < self.today]
-        hist = []
-        for d in days:
-            m = sess[d]
-            o = m[min(m)]["o"]
-            hist.append((o, [m[i]["c"] if i in m else None for i in range(390)]))
-        prev = sess[days[-1]]
-        prev_close = prev[max(prev)]["c"]
-        return core.sigma_profile(hist), prev_close
+                sess.setdefault(t.strftime("%Y-%m-%d"), {})[i] = b
+        days = [d for d in sorted(sess) if len(sess[d]) >= 200 and d < self.today]
+        hist = [(sess[d][min(sess[d])]["o"], [sess[d][i]["c"] if i in sess[d] else None for i in range(390)]) for d in days]
+        prior = {}
+        for m in (5, 15):
+            blk = []
+            for d in days:
+                bars = sess[d]
+                for b0 in range(0, 390, m):
+                    seg = [bars[i] for i in range(b0, b0 + m) if i in bars]
+                    if len(seg) == m:
+                        blk.append((max(s["h"] for s in seg), min(s["l"] for s in seg), seg[-1]["c"]))
+            prior[m] = blk[-400:]
+        last = sess[days[-1]]
+        cal = feed.calendar(self.H, self.today, self.today)
+        close = (cal[0].get("close") if cal else "16:00") or "16:00"
+        endi = (int(close[:2]) * 60 + int(close[3:5])) - 570 - 1
+        return core.sigma_profile(hist), last[max(last)]["c"], prior, endi
 
     def today_bars(self):
         start = now_et().replace(hour=9, minute=30, second=0, microsecond=0).astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         out = {}
         for b in feed.bars(self.H, "SPY", "1Min", start, feed="iex"):
-            t = datetime.fromisoformat(b["t"].replace("Z", "+00:00")).astimezone(ET)
-            i = minute_index(t)
+            i = minute_index(datetime.fromisoformat(b["t"].replace("Z", "+00:00")).astimezone(ET))
             if 0 <= i < 390:
                 out[i] = b
         return out
 
     def start_day(self, first_open):
-        sig, pc = self.history()
-        self.day = core.Day(open=first_open, prev_close=pc, sigma=sig)
-        self.event(f"day ready: open {first_open:.2f}, prev close {pc:.2f}, 14-day noise at 10:00 ±{sig[30] * 100:.2f}%")
-
-    # ------------------------------------------------------------------ bars -> rules
-    def feed_bar(self, i, b, replay=False):
-        if self.day is None:
-            if i != 0:
-                # joined late: rebuild from the 9:30 bar
-                return self.catch_up()
-            self.start_day(b["o"])
-        if i <= self.last_i:
-            return
-        if i > self.last_i + 1:          # missed bars (disconnect): fill from REST first
-            have = self.today_bars()
-            for k in range(self.last_i + 1, i):
-                if k in have:
-                    self._bar(k, have[k], replay=True)
-        self._bar(i, b, replay)
-
-    def _bar(self, i, b, replay):
-        self.last_i = i
-        sig = self.day.on_bar(i, b["o"], b["h"], b["l"], b["c"], b.get("v", 0))
-        self.dirty = True
-        if not sig:
-            return
-        kind, x = sig
-        if kind == "enter":
-            self.day.traded = True
-            self.day.position = dict(side=x, i=i, spy=b["c"], t=now_et().strftime("%H:%M:%S"))
-            lv = self.day.levels(i)
-            self.event(f"SIGNAL {'CALL' if x == 'C' else 'PUT'} at bar {i} close {b['c']:.2f} (band {lv['ub']}/{lv['lb']}, vwap {lv['vwap']})",
-                       kind="enter", replay=replay)
-            if not replay or self._fresh(i):
-                self.enter(x, b["c"], i)
-        elif kind == "exit":
-            pos = self.day.position
-            self.day.position = None
-            self.event(f"EXIT {x} at bar {i} close {b['c']:.2f}", kind="exit", replay=replay)
-            self.exit(pos, x)
-
-    def _fresh(self, i):
-        return minute_index(now_et()) - i <= 3
+        sig, pc, prior, endi = self.history()
+        self.lanes = {k: core.Session(first_open, pc, sig, prior, end=endi, books=L["books"], max_trades=L["max_trades"])
+                      for k, L in core.LANES.items()}
+        self.event(f"day ready: open {first_open:.2f}, prev close {pc:.2f}, noise band at 10:00 ±{sig[30] * 100:.2f}%, "
+                   f"5m trend {'up' if self.lanes['A'].st_prev[5] > 0 else 'down'}, 15m {'up' if self.lanes['A'].st_prev[15] > 0 else 'down'}")
 
     def catch_up(self):
         bars = self.today_bars()
@@ -193,80 +179,173 @@ class Apex:
         for i in sorted(bars):
             if t_closed(i):
                 self._bar(i, bars[i], replay=True)
-        self.event(f"replayed {self.last_i + 1} bars; position {self.day.position}")
+        self.event(f"replayed {self.last_i + 1} bars")
 
-    # ------------------------------------------------------------------ execution
-    def chain(self, side, spot):
-        """strikes from ATM outward (OTM direction) with live quotes"""
-        base = round(spot)
-        ks = [base + k if side == "C" else base - k for k in range(0, 13)]
-        syms = [orders.occ(self.today, side, k) for k in ks]
-        q = {}
+    # ------------------------------------------------------------------ bars -> rules
+    def feed_bar(self, i, b):
+        if self.lanes is None:
+            if i != 0:
+                return self.catch_up()
+            self.start_day(b["o"])
+        if i <= self.last_i:
+            return
+        if i > self.last_i + 1:
+            have = self.today_bars()
+            for k in range(self.last_i + 1, i):
+                if k in have:
+                    self._bar(k, have[k], replay=True)
+        self._bar(i, b, replay=False)
+
+    def _bar(self, i, b, replay):
+        self.last_i = i
+        if i == 3 and self.imp is None:
+            self.set_implied(b["c"], replay)
+        for lane, S in self.lanes.items():
+            S.imp = self.imp
+            for kind, t in S.on_bar(i, b["o"], b["h"], b["l"], b["c"], b.get("v", 0)):
+                if kind == "enter":
+                    self.on_enter(lane, S, t, b["c"], replay)
+                else:
+                    self.on_exit(lane, S, t, b["c"], replay)
+        self.dirty = True
+
+    def set_implied(self, spot, replay=False):
+        k = round(spot)
+        syms = [orders.occ(self.today, x, k) for x in "CP"]
+        if replay:
+            # started after 9:33: use the real 9:33 option prints, not the current quotes
+            c = p = None
+            try:
+                t0 = now_et().replace(hour=9, minute=33, second=0, microsecond=0).astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+                r = requests.get(f"{DATA}/v1beta1/options/bars", headers=self.H, params=dict(symbols=",".join(syms), timeframe="1Min",
+                                 start=t0, limit=20), timeout=10)
+                bars = (r.json().get("bars") or {}) if r.ok else {}
+                c = (bars.get(syms[0]) or [{}])[0].get("c")
+                p = (bars.get(syms[1]) or [{}])[0].get("c")
+            except requests.RequestException:
+                pass
+            c, p = ((c, c), (p, p)) if c and p else (None, None)
+        else:
+            ch = self.snap(syms)
+            c, p = ch.get(syms[0]), ch.get(syms[1])
+        if c and p:
+            self.imp = ((c[0] + c[1]) / 2 + (p[0] + p[1]) / 2) / self.lanes["A"].o0 * 100
+            self.S["imp"] = self.imp
+            d = core.dial(self.imp)
+            self.event(f"9:33 straddle prices a {self.imp:.2f}% move → size dial {d:.2f}" + (" (no trades today: options too expensive)" if not d else ""))
+        else:
+            self.event("9:33 straddle quote missing → size dial 0.50")
+
+    # ------------------------------------------------------------------ quotes
+    def snap(self, syms):
+        q, missing = {}, []
         for s in syms:
             v = self.quotes.get(s)
             if v and time.time() - v[2] < 5 and v[1] > 0:
                 q[s] = (v[0], v[1])
-        missing = [s for s in syms if s not in q]
-        if missing:
-            r = requests.get(f"{DATA}/v1beta1/options/snapshots", headers=self.H,
-                             params=dict(symbols=",".join(missing), feed="indicative"), timeout=10)
-            for s, snap in ((r.json().get("snapshots") or {}) if r.ok else {}).items():
-                lq = snap.get("latestQuote") or {}
-                if lq.get("ap"):
-                    q[s] = (lq.get("bp") or 0.0, lq["ap"])
+            else:
+                missing.append(s)
+        for k in range(0, len(missing), 50):
+            try:
+                r = requests.get(f"{DATA}/v1beta1/options/snapshots", headers=self.H,
+                                 params=dict(symbols=",".join(missing[k:k + 50]), feed="indicative"), timeout=10)
+                for s, sn in ((r.json().get("snapshots") or {}) if r.ok else {}).items():
+                    lq = sn.get("latestQuote") or {}
+                    if lq.get("ap"):
+                        q[s] = (lq.get("bp") or 0.0, lq["ap"])
+            except requests.RequestException:
+                pass
+        return q
+
+    def chain(self, side, spot):
+        base = round(spot)
+        ks = [base + k if side == "C" else base - k for k in range(0, 13)]
+        syms = [orders.occ(self.today, side, k) for k in ks]
+        q = self.snap(syms)
         return [(k, s, q[s]) for k, s in zip(ks, syms) if s in q]
 
-    def enter(self, side, spot, i):
+    # ------------------------------------------------------------------ execution
+    def tag(self, cap, lane, n):
+        return f"apex-{cap}-{self.ymd}-{lane}{n}"
+
+    def on_enter(self, lane, S, t, spot, replay):
+        side = t["side"]
+        name = {"orb": "OPENING RANGE", "ride": "TREND RIDE", "pull": "PULLBACK SCALP", "fade": "FAILED-BREAKOUT FADE"}[t["book"]]
+        ex = t["ex"]
+        plan = (f"target {ex['tp']:.2f} / stop {ex['sl']:.2f} / {ex['cap']} min" if ex.get("tp") else "hold while outside the band, flat 15:45")
+        self.event(f"[{lane}] {name} {'CALL' if side == 'C' else 'PUT'} at {spot:.2f} — {plan}", kind="enter", replay=replay)
         ch = self.chain(side, spot)
+        atm = next((ba for k, s, ba in ch if k == round(spot)), None)
+        if not atm:
+            S.cancel(t)
+            self.event(f"[{lane}] no ATM quote; skipped")
+            return
+        t["ref_in"] = atm[1]
+        if replay and minute_index(now_et()) - t["i"] > 3:
+            return                                  # stale signal after a restart: track it, don't chase it
+        w = core.dial(self.imp) * core.LANES[lane]["weight"]
+        veto = self.ai_veto(side)
         for cap, led in self.L.items():
-            tag = f"apex-{cap}-{self.today[2:].replace('-', '')}"
-            if any(t["tag"] == tag for t in led["trades"]):
+            tg = self.tag(cap, lane, t["n"])
+            if any(x["tag"] == tg for x in led["trades"]):
                 continue
-            budget = led["cash"] * FRAC
-            pick = next(((k, s, ba) for k, s, ba in ch if (ba[1] + EDGE) * 100 <= budget), None)
+            open_cost = sum(x.get("cost", 0) for x in led["trades"] if x["day"] == self.today and not x.get("booked"))
+            budget = min(led["cash"] * FRAC * w, led["cash"] - open_cost)
+            pick = next(((k, s, ba) for k, s, ba in ch if (ba[1] + orders.EDGE) * 100 <= budget), None) if budget > 0 else None
             if not pick:
-                self.event(f"${cap}: nothing affordable within ${budget:.0f}", kind="skip")
+                self.event(f"${cap}: {'dial is 0' if w == 0 else f'nothing affordable within ${budget:.0f}'} — not traded", kind="skip")
                 continue
             k, sym, (bid, ask) = pick
-            qty = max(1, int(budget // ((ask + EDGE) * 100)))
-            veto = self.ai_veto(side)
-            rec = dict(tag=tag, cap=int(cap), day=self.today, side=side, strike=k, symbol=sym, qty=qty, bar=i, spy_in=spot,
-                       quote_in=[bid, ask], t_in=now_et().strftime("%H:%M:%S"), ai_veto=veto)
+            qty = max(1, int(budget // ((ask + orders.EDGE) * 100)))
+            rec = dict(tag=tg, cap=int(cap), day=self.today, lane=lane, n=t["n"], book=t["book"], side=side, strike=k, symbol=sym,
+                       qty=qty, bar=t["i"], spy_in=spot, quote_in=[bid, ask], cost=round((ask + orders.EDGE) * 100 * qty, 2),
+                       t_in=now_et().strftime("%H:%M:%S"), ai_veto=veto, stop=ex.get("sl"), target=ex.get("tp"))
             if veto and os.environ.get("APEX_AI_VETO") == "1":
-                rec["status"] = "vetoed"
+                rec.update(status="vetoed", booked=True, pnl=0.0)
                 led["trades"].append(rec)
-                self.event(f"${cap}: entry vetoed by news desk ({veto})", kind="veto")
+                self.event(f"${cap}: vetoed by the news desk ({veto})", kind="veto")
                 continue
             led["trades"].append(rec)
             if self.dry:
-                rec.update(fill_in=ask, status="dry")
+                rec.update(fill_in=ask, filled_qty=qty, status="dry", buy_done=True)
             else:
-                oid, st, j = orders.submit(self.H, sym, qty, "buy", tag + "-b")
-                rec.update(buy_id=oid, status=st)
-            self.event(f"${cap}: BUY {qty}x {sym} ask {ask:.2f} → {rec['status']}", kind="order")
+                oid, st, _ = orders.submit(self.H, sym, qty, "buy", tg + "-b")
+                rec.update(buy_id=oid, status=st, buy_ts=time.time())
+            self.event(f"${cap}: BUY {qty}× {sym} @ ask {ask:.2f} → {rec['status']}", kind="order")
         self.sub_options()
 
-    def exit(self, pos, why):
+    def on_exit(self, lane, S, t, spot, replay):
+        done = next((x for led in self.L.values() for x in led["trades"] if x["tag"].endswith(f"-{lane}{t['n']}") and x["day"] == self.today
+                     and x.get("pct") is not None), None)
+        if replay and done:
+            S.result(t, done["pct"] / 100)          # restart: use the real result we already booked
+        else:
+            atm = self.snap([orders.occ(self.today, t["side"], round(t["spy_in"]))]).get(orders.occ(self.today, t["side"], round(t["spy_in"])))
+            S.result(t, (atm[0] / t["ref_in"] - 1) if atm and t.get("ref_in") else -1.0)
+        self.event(f"[{lane}] EXIT {t['book']} ({t['why']}) at {spot:.2f}", kind="exit", replay=replay)
         for cap, led in self.L.items():
-            rec = next((t for t in led["trades"] if t["day"] == self.today and "sell_status" not in t and t.get("status") not in ("vetoed",)), None)
-            if not rec:
+            rec = next((x for x in led["trades"] if x["tag"] == self.tag(cap, lane, t["n"])), None)
+            if not rec or rec.get("booked") or rec.get("sell_id") or rec.get("sell_status"):
                 continue
-            rec.update(t_out=now_et().strftime("%H:%M:%S"), why=why, spy_out=self.tick or self.day.closes[-1])
-            if self.dry:
-                b = self.quotes.get(rec["symbol"], (0, 0, 0))[0]
-                rec.update(sell_status="dry", fill_out=b)
-            else:
-                self.fill(rec)
-                held = rec.get("filled_qty") or 0
-                if not held:
-                    if rec.get("buy_id") and not rec.get("buy_done"):
-                        orders._req(self.H, "DELETE", f"/v2/orders/{rec['buy_id']}")
-                    rec.update(sell_status="nothing filled", booked=True, pnl=0.0, pct=0.0)
-                    continue
-                oid, st, j = orders.submit(self.H, rec["symbol"], held, "sell", rec["tag"] + "-s")
-                rec.update(sell_id=oid, sell_status=st)
-            self.event(f"${cap}: SELL {rec['symbol']} ({why}) → {rec['sell_status']}", kind="order")
-        self.settle()
+            rec.update(t_out=now_et().strftime("%H:%M:%S"), why=t["why"], spy_out=spot)
+            self.sell(rec)
+
+    def sell(self, rec):
+        if self.dry:
+            q = self.quotes.get(rec["symbol"]) or (*self.snap([rec["symbol"]]).get(rec["symbol"], (0.0, 0.0)), 0)
+            rec.update(sell_status="dry", fill_out=q[0], sell_done=True)
+            self.settle()
+            return
+        self.fill(rec)
+        held = rec.get("filled_qty") or 0
+        if not held:
+            if rec.get("buy_id") and not rec.get("buy_done"):
+                orders._req(self.H, "DELETE", f"/v2/orders/{rec['buy_id']}")
+            rec.update(sell_status="nothing filled", booked=True, pnl=0.0, pct=0.0)
+            return
+        oid, st, _ = orders.submit(self.H, rec["symbol"], held, "sell", rec["tag"] + "-s")
+        rec.update(sell_id=oid, sell_status=st, sell_ts=time.time(), sell_done=False)
+        self.event(f"${rec['cap']}: SELL {held}× {rec['symbol']} ({rec.get('why')}) → {st}", kind="order")
 
     def fill(self, rec):
         for leg, key in (("buy", "buy_id"), ("sell", "sell_id")):
@@ -290,57 +369,77 @@ class Apex:
                 rec[f"{leg}_done"] = True
 
     def settle(self):
-        """book realised P&L into each ledger once both legs filled; re-price unfilled sells"""
         for cap, led in self.L.items():
             for rec in led["trades"]:
-                if rec.get("booked") or rec.get("status") == "vetoed" or rec.get("day") != self.today:
+                if rec.get("booked") or rec.get("day") != self.today:
                     continue
                 if not self.dry:
                     self.fill(rec)
-                if rec.get("sell_status") in ("new", "accepted", "partially_filled") and rec.get("sell_id"):
-                    # still working after a while: cancel and resend lower (marketable)
-                    if time.time() - rec.get("sell_ts", time.time()) > 8:
+                    # entry still working after 15 s: cancel the rest (keep any partial fill)
+                    if rec.get("buy_id") and not rec.get("buy_done") and time.time() - rec.get("buy_ts", time.time()) > 15:
+                        orders._req(self.H, "DELETE", f"/v2/orders/{rec['buy_id']}")
+                        self.fill(rec)
+                    # exit still working after 8 s: cancel and resend at the new bid
+                    if rec.get("sell_id") and not rec.get("sell_done") and time.time() - rec.get("sell_ts", time.time()) > 8:
                         orders._req(self.H, "DELETE", f"/v2/orders/{rec['sell_id']}")
-                    rec.setdefault("sell_ts", time.time())
+                        self.fill(rec)
+                    if rec.get("sell_status") in ("canceled", "expired", "rejected") and (rec.get("filled_qty") or 0) and rec.get("fill_out") is None:
+                        oid, st, _ = orders.submit(self.H, rec["symbol"], rec["filled_qty"], "sell", rec["tag"] + f"-s{int(time.time()) % 10000}")
+                        rec.update(sell_id=oid, sell_status=st, sell_ts=time.time(), sell_done=False)
                 if rec.get("fill_in") is not None and rec.get("fill_out") is not None:
                     q = rec.get("filled_qty") or rec["qty"]
                     rec["pnl"] = round((rec["fill_out"] - rec["fill_in"]) * 100 * q, 2)
-                    rec["pct"] = round(100 * (rec["fill_out"] / rec["fill_in"] - 1), 1) if rec["fill_in"] else 0
+                    rec["pct"] = round(100 * (rec["fill_out"] / rec["fill_in"] - 1), 1) if rec["fill_in"] else 0.0
                     led["cash"] += rec["pnl"]
                     rec["booked"] = True
                     self.event(f"${cap}: closed {rec['symbol']} {rec['pnl']:+.2f} ({rec['pct']:+.1f}%) → ledger ${led['cash']:.2f}", kind="pnl")
-                elif rec.get("sell_status") in ("canceled",) and rec.get("filled_qty"):
-                    oid, st, j = orders.submit(self.H, rec["symbol"], rec["filled_qty"], "sell", rec["tag"] + f"-s{int(time.time()) % 1000}")
-                    rec.update(sell_id=oid, sell_status=st, sell_ts=time.time(), sell_done=False)
         self.dirty = True
+
+    # ------------------------------------------------------------------ tick guard
+    def fast_check(self):
+        if not self.lanes or self.last_i < 0:
+            return
+        p = self.tick
+        for lane, S in self.lanes.items():
+            pos = S.pos
+            if not pos:
+                continue
+            sg = 1 if pos["side"] == "C" else -1
+            lv = pos["ex"].get("sl")
+            if lv is None:
+                i = len(S.c) - 1
+                lv = max(S.up[i], S.vw[i]) if sg > 0 else min(S.dn[i], S.vw[i])
+            if sg * (p - lv * (1 - sg * TICK_GUARD)) < 0:
+                S.pos = None
+                pos.update(j=len(S.c) - 1, why="FAST")
+                S.next_scan = len(S.c)
+                self.event(f"[{lane}] tick {p:.2f} cut 0.15% through the stop {lv:.2f} — selling now", kind="exit")
+                self.on_exit(lane, S, pos, p, False)
 
     # ------------------------------------------------------------------ AI
     def ai_veto(self, side):
         want = "up" if side == "C" else "down"
-        cutoff = time.time() - 600
         for r in self.reads:
-            if r["ts"] >= cutoff and r.get("relevant") and r.get("magnitude") == "large" and r.get("urgency") == "minutes" \
+            if r["ts"] >= time.time() - 600 and r.get("relevant") and r.get("magnitude") == "large" and r.get("urgency") == "minutes" \
                     and r.get("direction") not in (want, "none"):
                 return r.get("headline", "")[:120]
         return None
 
     async def on_news(self, n):
         n["et"] = datetime.fromisoformat(n["created_at"].replace("Z", "+00:00")).astimezone(ET).strftime("%H:%M:%S")
-        spy = self.tick or (self.day.closes[-1] if self.day and self.day.closes else 0.0)
-        ctx = ""
-        if self.day and self.day.closes:
-            ctx = f"SPY open {self.day.open:.2f}, prior close {self.day.prev_close:.2f}, VWAP {self.day.vwap():.2f}"
+        A = self.lanes["A"] if self.lanes else None
+        spy = self.tick or (A.c[-1] if A and A.c else 0.0)
+        ctx = f"SPY open {A.o0:.2f}, prior close {A.pc:.2f}, VWAP {A.vw[-1]:.2f}" if A and A.c else ""
         rec = await asyncio.to_thread(self.desk.read, n, spy, ctx)
         if not rec:
             return
         rec["ts"] = time.time()
         self.reads = [r for r in self.reads if r["ts"] > time.time() - 3600] + [rec]
         if rec.get("relevant") and rec.get("urgency") == "minutes" and rec.get("magnitude") in ("medium", "large") \
-                and rec.get("direction") in ("up", "down") and 0 <= minute_index(now_et()) < 370:
+                and rec.get("direction") in ("up", "down") and 0 <= minute_index(now_et()) < 370 and spy:
             asyncio.create_task(self.shock(rec, spy))
 
     async def shock(self, rec, spy0):
-        """paper-only: did a confirmed headline move pay? ATM option bought at the ask once SPY confirms, sold at bid."""
         sgn = 1 if rec["direction"] == "up" else -1
         side = "C" if sgn > 0 else "P"
         t_end = time.time() + 120
@@ -352,14 +451,12 @@ class Apex:
                 k, sym, (bid, ask) = ch[0]
                 pos = dict(headline=rec.get("headline"), side=side, symbol=sym, t_in=now_et().strftime("%H:%M:%S"), px_in=ask, spy_in=self.tick)
                 self.S["shock"].append(pos)
-                self.opt_subs.add(sym)
-                self.event(f"SHOCK (paper) {side} {sym} @ {ask:.2f} on: {rec.get('headline', '')[:80]}", kind="shock")
+                self.event(f"SHOCK (paper only) {side} {sym} @ {ask:.2f} on: {rec.get('headline', '')[:80]}", kind="shock")
                 await asyncio.sleep(SHOCK_HOLD * 60)
-                q = self.chain(side, self.tick or spy0)
-                b = next((ba[0] for kk, s, ba in q if s == sym), None)
-                pos.update(t_out=now_et().strftime("%H:%M:%S"), px_out=b, spy_out=self.tick,
-                           pct=round(100 * (b / ask - 1), 1) if b and ask else None)
-                self.event(f"SHOCK (paper) closed {sym} {pos['pct']}%", kind="shock")
+                q = self.snap([sym]).get(sym)
+                b = q[0] if q else None
+                pos.update(t_out=now_et().strftime("%H:%M:%S"), px_out=b, spy_out=self.tick, pct=round(100 * (b / ask - 1), 1) if b and ask else None)
+                self.event(f"SHOCK (paper only) closed {sym} {pos['pct']}%", kind="shock")
                 return
             await asyncio.sleep(1)
         self.log_ai(dict(kind="shock_unconfirmed", headline=rec.get("headline"), spy0=spy0, spy=self.tick))
@@ -373,11 +470,11 @@ class Apex:
                 a["et"] = datetime.fromisoformat(a["created_at"].replace("Z", "+00:00")).astimezone(ET).strftime("%m-%d %H:%M")
                 if self.desk.wanted(a):
                     items.append(a)
-            sig, pc = self.history()
+            sig, pc, _, _ = self.history()
             out = await asyncio.to_thread(self.desk.brief, list(reversed(items)), pc)
             if out:
                 self.S["brief"] = out
-                self.event(f"brief: {out.get('regime')} / lean {out.get('lean')} / trend-day {out.get('trend_day_odds')}")
+                self.event(f"brief: {out.get('regime')} / lean {out.get('lean')} / trend-day odds {out.get('trend_day_odds')}")
         except Exception as e:
             self.event(f"brief error {e!r}")
 
@@ -387,20 +484,21 @@ class Apex:
 
     async def stock_stream(self):
         import websockets
+        backoff = 2
         while True:
             try:
                 async with websockets.connect(WS_STOCK, ping_interval=20) as ws:
                     await ws.send(json.dumps(self.auth()))
                     await ws.send(json.dumps({"action": "subscribe", "trades": ["SPY"], "bars": ["SPY"]}))
                     self.event("stock stream connected")
+                    backoff = 2
                     async for raw in ws:
                         for m in json.loads(raw):
                             if m.get("T") == "t":
-                                self.tick, self.tick_t = m["p"], time.time()
+                                self.tick = m["p"]
                                 self.fast_check()
                             elif m.get("T") == "b":
-                                t = datetime.fromisoformat(m["t"].replace("Z", "+00:00")).astimezone(ET)
-                                i = minute_index(t)
+                                i = minute_index(datetime.fromisoformat(m["t"].replace("Z", "+00:00")).astimezone(ET))
                                 if 0 <= i < 390:
                                     self.feed_bar(i, m)
                                     self.sub_options()
@@ -408,33 +506,21 @@ class Apex:
                                 self.event(f"stock stream error {m}")
             except Exception as e:
                 self.event(f"stock stream dropped {e!r}; reconnecting")
-                await asyncio.sleep(2)
-
-    def fast_check(self):
-        """tick-level guard between bar closes: if SPY blows through the exit level by 0.15%, don't wait for the close"""
-        d = self.day
-        if not d or not d.position or not d.closes:
-            return
-        lv = d.levels(min(self.last_i, 389))
-        p = self.tick
-        side = d.position["side"]
-        if (side == "C" and p < lv["call_exit"] * (1 - 0.0015)) or (side == "P" and p > lv["put_exit"] * (1 + 0.0015)):
-            pos = d.position
-            d.position = None
-            self.event(f"FAST EXIT tick {p:.2f} through {'call' if side == 'C' else 'put'} exit level", kind="exit")
-            self.exit(pos, "FAST")
+                await asyncio.sleep(backoff)
+                backoff = min(backoff * 2, 30)
 
     def sub_options(self):
-        if not self.tick and not (self.day and self.day.closes):
+        A = self.lanes["A"] if self.lanes else None
+        spot = self.tick or (A.c[-1] if A and A.c else None)
+        if not spot or self.opt_ws is None:
             return
-        spot = self.tick or self.day.closes[-1]
         base = round(spot)
-        want = {orders.occ(self.today, s, k) for s in "CP" for k in range(base - 4, base + 5)}
-        for led in self.L.values():
-            want |= {t["symbol"] for t in led["trades"] if t["day"] == self.today}
-        if want - self.opt_subs and self.opt_ws is not None:
-            self.opt_subs |= want
-            asyncio.ensure_future(self._opt_send({"action": "subscribe", "quotes": sorted(want)}))
+        want = {orders.occ(self.today, s, k) for s in "CP" for k in range(base - 6, base + 7)}
+        want |= {t["symbol"] for t in self.today_trades()}
+        new = want - self.opt_subs
+        if new:
+            self.opt_subs |= new
+            asyncio.ensure_future(self._opt_send({"action": "subscribe", "quotes": sorted(new)}))
 
     async def _opt_send(self, msg):
         import msgpack
@@ -446,12 +532,14 @@ class Apex:
     async def option_stream(self):
         import msgpack
         import websockets
+        backoff = 3
         while True:
             try:
                 async with websockets.connect(WS_OPT, additional_headers={"Content-Type": "application/msgpack"}, ping_interval=20) as ws:
                     await ws.send(msgpack.packb(self.auth()))
                     self.opt_ws, self.opt_subs = ws, set()
                     self.event("option stream connected")
+                    backoff = 3
                     self.sub_options()
                     async for raw in ws:
                         for m in msgpack.unpackb(raw, raw=False):
@@ -462,63 +550,50 @@ class Apex:
             except Exception as e:
                 self.opt_ws = None
                 self.event(f"option stream dropped {e!r}; reconnecting")
-                await asyncio.sleep(3)
+                await asyncio.sleep(backoff)
+                backoff = min(backoff * 2, 30)
 
     async def news_stream(self):
         import websockets
+        backoff = 3
         while True:
             try:
                 async with websockets.connect(WS_NEWS, ping_interval=20) as ws:
                     await ws.send(json.dumps(self.auth()))
                     await ws.send(json.dumps({"action": "subscribe", "news": ["*"]}))
                     self.event(f"news stream connected (AI desk {'on' if self.desk.on else 'off: no ANTHROPIC_API_KEY'})")
+                    backoff = 3
                     async for raw in ws:
                         for m in json.loads(raw):
                             if m.get("T") == "n":
                                 asyncio.create_task(self.on_news(m))
             except Exception as e:
                 self.event(f"news stream dropped {e!r}; reconnecting")
-                await asyncio.sleep(3)
+                await asyncio.sleep(backoff)
+                backoff = min(backoff * 2, 60)
 
     async def housekeeping(self, deadline):
         briefed = "brief" in self.S
         while time.time() < deadline:
-            n = now_et()
-            hm = n.hour * 100 + n.minute
+            hm = now_et().hour * 100 + now_et().minute
             if not briefed and hm >= 920:
                 briefed = True
                 asyncio.create_task(self.brief())
-            if self.day and self.day.position is None:
+            if any(not t.get("booked") for t in self.today_trades()):
                 self.settle()
-            elif self.day and self.day.position:
-                for led in self.L.values():
-                    for rec in led["trades"]:
-                        if rec["day"] == self.today and not rec.get("booked") and not self.dry:
-                            self.fill(rec)
-                            rec.setdefault("buy_ts", time.time())
-                            if not rec.get("buy_done") and rec.get("buy_id") and time.time() - rec["buy_ts"] > 15:
-                                orders._req(self.H, "DELETE", f"/v2/orders/{rec['buy_id']}")
-                                self.fill(rec)
-            # mark open trades
-            for led in self.L.values():
-                for rec in led["trades"]:
-                    q = self.quotes.get(rec.get("symbol"))
-                    if rec["day"] == self.today and not rec.get("booked") and q:
-                        rec["mark"] = round((q[0] + q[1]) / 2, 2)
+            for t in self.today_trades():
+                q = self.quotes.get(t.get("symbol"))
+                if not t.get("booked") and q:
+                    t["mark"] = round((q[0] + q[1]) / 2, 2)
             self.save()
-            if hm >= 1600 or (hm >= 1547 and self.day and not self.day.position and all(
-                    t.get("booked") or t.get("status") in ("vetoed",) for led in self.L.values() for t in led["trades"] if t["day"] == self.today)):
-                if hm >= 1547:
-                    self.event("session done")
-                    self.save()
-                    return
+            busy = (self.lanes and any(S.pos for S in self.lanes.values())) or any(not t.get("booked") for t in self.today_trades())
+            if hm >= 1600 or (hm >= 1547 and not busy):
+                self.event("session done")
+                self.save()
+                return
             await asyncio.sleep(1)
         self.event("job time limit reached; state saved for the next job")
         self.save()
-
-
-def t_closed(i):
-    return minute_index(now_et()) > i
 
 
 async def amain(a):
@@ -529,7 +604,7 @@ async def amain(a):
         print("no session today; next open", c["next_open"])
         return
     deadline = time.time() + a.max_minutes * 60
-    while not c["is_open"] and (nxt - now_et()).total_seconds() > 20 * 60:     # start streams ~20 min before the bell
+    while not c["is_open"] and (nxt - now_et()).total_seconds() > 20 * 60:
         await asyncio.sleep(30)
     os.makedirs(LIVE, exist_ok=True)
     ap = Apex(H, dry=a.dry)

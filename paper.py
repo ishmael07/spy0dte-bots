@@ -48,7 +48,7 @@ BOTS = {
     "daily": ("Every day", "daily7", NEW_EXIT),
     "noise": ("Noise Area", "noise", None),
     "noise_plus": ("Noise Area+", "noise_plus", None),
-    "apex": ("Apex", "apex", None),
+    "apex": ("Apex", "apex2", None),
 }
 SIZING = {"all": 1.0, "half": 0.5, "quarter": 0.25}
 SLEEVES = {"all": (1.0, 0.5), "half": (0.5, 0.25), "quarter": (0.25, 0.1)}
@@ -192,6 +192,9 @@ def run_bot(key, T, S1, CB, ev, days, capital, size, rule="none"):
         C = SNIPED1
         return S1.run(C["family"], C["confirm"], C["window"], C["exit"], C["max_day"], C["rule"],
                       [d for d in S1.days if d in set(days)], frac=frac, capital=capital, detail=True, acct_rule=rule, sessions=sess)
+    if mode == "apex2":
+        from apex import sim as apex_sim
+        return apex_sim.run(S1.m1, days, capital, frac, acct_rule=rule, sessions=sess)
     if mode in noise_bot.VARIANTS:
         return noise_bot.run(T, days, capital, frac, detail=True, acct_rule=rule, sessions=sess, variant=mode)[0]
     if mode == "time":

@@ -44,7 +44,7 @@ def main():
             if x.get("skipped") or "ei" not in x:
                 continue
             x = dict(x)
-            one = key == "sniped1" or x.get("bot") == "Sniped1"
+            one = key in ("sniped1", "apex") or x.get("bot") == "Sniped1"
             fr = m1 if one else f5
             step = 1 if one else 5
             sig = x.get("si", x.get("i"))
@@ -147,7 +147,7 @@ def main():
         today = phase_days["live"][-1]
         g = m1[m1.day == today]
         keep = ("side", "strike", "qty", "addQty", "addPx", "tIn", "tOut", "optIn", "optOut", "pnl", "pct", "reason", "open",
-                "spyIn", "spyOut", "stopLvl", "alpaca", "path", "kind", "bot", "tier")
+                "spyIn", "spyOut", "stopLvl", "alpaca", "path", "kind", "bot", "tier", "book")
         live = dict(day=today, marketOpen=market_open, names={k: v[0] for k, v in BOTS.items()}, trades=[],
                     spy=[[ts(t), round(float(o), 2), round(float(h), 2), round(float(l), 2), round(float(c), 2)]
                          for t, o, h, l, c in zip(g.t, g.open, g.high, g.low, g.close)])
