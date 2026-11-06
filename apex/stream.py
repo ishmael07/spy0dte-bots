@@ -10,7 +10,7 @@ sized by the 9:33 straddle dial. Same Session code as the lab parity test and th
 Orders: $100 and $500 ledgers in the shared Alpaca paper account, 50% of ledger equity x dial x lane weight,
 client_order_id apex-{cap}-{yymmdd}-{lane}{n}-{b|s} so a restart can never double-buy. Restart-safe: on start it
 replays today's bars through the rules and resumes from the persisted ledger.
-Tick guard: if SPY trades 0.15% through a position's stop level between bar closes, it sells at once.
+Seconds-level exits: scalp targets/stops act on the SPY trade print itself; rides exit on a 0.15% tick break of the band.
 
 AI desk (advisory): pre-market brief, a read on every market-moving headline, a paper-only "shock" ledger, all logged
 and scored forward. APEX_AI_VETO=1 lets a fresh, large, opposite headline block a new entry (off by default).
@@ -397,24 +397,33 @@ class Apex:
 
     # ------------------------------------------------------------------ tick guard
     def fast_check(self):
-        if not self.lanes or self.last_i < 0:
+        """seconds-level exits on every SPY trade print:
+        scalps/ORB: target or stop touched -> sell now (an ORB target hit while SPY is breaking out is left to the bar close,
+        where it converts into a ride); rides: SPY 0.15% through the band/VWAP exit level -> sell now."""
+        if not self.lanes or self.last_i < 0 or not self.tick:
             return
         p = self.tick
         for lane, S in self.lanes.items():
             pos = S.pos
-            if not pos:
+            if not pos or not S.c:
                 continue
             sg = 1 if pos["side"] == "C" else -1
-            lv = pos["ex"].get("sl")
-            if lv is None:
-                i = len(S.c) - 1
+            ex, i = pos["ex"], len(S.c) - 1
+            why = None
+            if ex.get("sl") is not None and sg * (p - ex["sl"]) <= 0:
+                why, lv = "STOP (tick)", ex["sl"]
+            elif ex.get("tp") is not None and sg * (p - ex["tp"]) >= 0:
+                breaking_out = p > S.up[i] if sg > 0 else p < S.dn[i]
+                if not (ex.get("upgrade") and breaking_out):
+                    why, lv = "TARGET (tick)", ex["tp"]
+            elif ex.get("struct") == "band":
                 lv = max(S.up[i], S.vw[i]) if sg > 0 else min(S.dn[i], S.vw[i])
-            if sg * (p - lv * (1 - sg * TICK_GUARD)) < 0:
-                S.pos = None
-                pos.update(j=len(S.c) - 1, why="FAST")
-                S.next_scan = len(S.c)
-                self.event(f"[{lane}] tick {p:.2f} cut 0.15% through the stop {lv:.2f} — selling now", kind="exit")
-                self.on_exit(lane, S, pos, p, False)
+                if sg * (p - lv * (1 - sg * TICK_GUARD)) < 0:
+                    why = "BAND (tick)"
+            if why:
+                t = S.force_exit(why)
+                self.event(f"[{lane}] {why}: SPY {p:.2f} vs {lv:.2f} — selling now", kind="exit")
+                self.on_exit(lane, S, t, p, False)
 
     # ------------------------------------------------------------------ AI
     def ai_veto(self, side):

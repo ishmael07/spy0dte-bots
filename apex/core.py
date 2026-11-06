@@ -248,6 +248,19 @@ class Session:
                 break
         return ev
 
+    def force_exit(self, why):
+        """exit decided between bar closes (tick-level target/stop). Same bookkeeping as a bar-close exit."""
+        p = self.pos
+        if not p:
+            return None
+        i = len(self.c) - 1
+        p.update(j=i, why=why)
+        self.pos = None
+        self.next_scan = i + 1
+        if p["book"].split("→")[0] in ("ride", "orb") and why.startswith(("BAND", "STOP")) and i - p["i"] <= 30:
+            self.ctx["failed"] = dict(side=p["side"], j=i)
+        return p
+
     def result(self, trade, ret):
         """caller reports the realised option return of a closed trade (drives the 2-loser stop)"""
         trade["ret"] = ret
