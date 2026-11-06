@@ -3575,9 +3575,9 @@
 "qty": 2,
 "buy": {
 "id": "b89c00a0-9303-4bfc-a301-6932cfe428fc",
-"status": "new",
-"fill": null,
-"filled_qty": 0
+"status": "filled",
+"fill": 2.34,
+"filled_qty": 2
 }
 },
 "noise_plus-500-261106-C741-4282": {
@@ -3589,9 +3589,9 @@
 "qty": 2,
 "buy": {
 "id": "55be16c3-9c79-4ebd-a6bd-702b591a8824",
-"status": "new",
-"fill": null,
-"filled_qty": 0
+"status": "filled",
+"fill": 2.33,
+"filled_qty": 2
 }
 }
 }
