@@ -13,7 +13,10 @@ import os
 import re
 import time
 
-MODEL = os.environ.get("APEX_AI_MODEL", "claude-opus-5-5")
+# Headlines: Claude Haiku 5.5 — fast (~1-2 s) and ~$0.10/M input tokens, enough to grade one headline at a time.
+# Pre-market brief (once a day, needs more judgment): Claude Sonnet 5.5. Both overridable by env.
+MODEL = os.environ.get("APEX_AI_MODEL", "claude-haiku-5-5")
+BRIEF_MODEL = os.environ.get("APEX_AI_BRIEF_MODEL", "claude-sonnet-5-5")
 
 # headlines worth a model call: macro, Fed, rates, geopolitics, index heavyweights
 MACRO = re.compile(r"\b(Fed|FOMC|Powell|Warsh|rate (hike|cut)|CPI|PPI|inflation|payrolls?|jobs report|unemployment|GDP|PCE|"
@@ -82,15 +85,19 @@ class Desk:
         syms = set(n.get("symbols") or [])
         return bool(syms & HEAVY) or bool(MACRO.search(n.get("headline", "")))
 
-    def _ask(self, schema, prompt, max_tokens=1500):
+    def _ask(self, schema, prompt, max_tokens=1500, model=None, effort="low"):
         import anthropic
-        kw = dict(model=MODEL, max_tokens=max_tokens, system=SYSTEM, output_config={"effort": "low", "format": {"type": "json_schema", "schema": schema}},
+        model = model or MODEL
+        kw = dict(model=model, max_tokens=max_tokens, system=SYSTEM, output_config={"effort": effort, "format": {"type": "json_schema", "schema": schema}},
                   messages=[{"role": "user", "content": prompt}])
         t = time.time()
-        try:
-            r = self.client.beta.messages.create(betas=["server-side-fallback-2026-07-01"], fallbacks="default", **kw)
-        except (anthropic.BadRequestError, TypeError):
+        if "haiku" in model:                       # Haiku has no server-side refusal fallback
             r = self.client.messages.create(**kw)
+        else:
+            try:
+                r = self.client.beta.messages.create(betas=["server-side-fallback-2026-07-01"], fallbacks="default", **kw)
+            except (anthropic.BadRequestError, TypeError):
+                r = self.client.messages.create(**kw)
         self.calls += 1
         if r.stop_reason == "refusal":
             return None, time.time() - t
@@ -110,7 +117,7 @@ class Desk:
             return None
         if out is None:
             return None
-        rec = dict(kind="ai_read", id=n.get("id"), et=n.get("et"), headline=n.get("headline"), spy=spy, secs=round(dt, 1), **out)
+        rec = dict(kind="ai_read", id=n.get("id"), et=n.get("et"), headline=n.get("headline"), spy=spy, secs=round(dt, 1), model=MODEL, **out)
         self.log(rec)
         return rec
 
@@ -120,7 +127,7 @@ class Desk:
         lines = "\n".join(f"- [{h.get('et')}] {h.get('headline')}" for h in headlines[-80:])
         prompt = (f"Pre-market brief. SPY prior close {spy_prev_close:.2f}.\n{extra}\nOvernight and pre-market headlines:\n{lines}")
         try:
-            out, dt = self._ask(BRIEF_SCHEMA, prompt, max_tokens=3000)
+            out, dt = self._ask(BRIEF_SCHEMA, prompt, max_tokens=4000, model=BRIEF_MODEL, effort="medium")
         except Exception as e:
             self.log(dict(kind="ai_error", error=repr(e)[:300]))
             return None
