@@ -7,7 +7,8 @@ Streams (Alpaca, free plan):
 
 Rules: core.py, two lanes (A = trend ride, B = opening range / pullback / fade scalps), at most 3 trades a day,
 sized by the 9:33 straddle dial. Same Session code as the lab parity test and the leaderboard sim (sim.py).
-Orders: $100 and $500 ledgers in the shared Alpaca paper account, 50% of ledger equity x dial x lane weight,
+Orders: one paper ledger per risk mode (core.MODES: balanced/survival/aggressive) x $100/$500 in the shared Alpaca
+paper account; each trade risks the mode's lane fraction of ledger equity x the size dial,
 client_order_id apex-{cap}-{yymmdd}-{lane}{n}-{b|s} so a restart can never double-buy. Restart-safe: on start it
 replays today's bars through the rules and resumes from the persisted ledger.
 Seconds-level exits: scalp targets/stops act on the SPY trade print itself; rides exit on a 0.15% tick break of the band.
@@ -41,7 +42,6 @@ WS_STOCK = "wss://stream.data.alpaca.markets/v2/iex"
 WS_OPT = "wss://stream.data.alpaca.markets/v1beta1/indicative"
 WS_NEWS = "wss://stream.data.alpaca.markets/v1beta1/news"
 CAPS = (100, 500)
-FRAC = 0.5
 TICK_GUARD = 0.0015
 SHOCK_MOVE = 0.0015
 SHOCK_HOLD = 30
@@ -68,7 +68,12 @@ class Apex:
         self.ledger_path = os.path.join(LIVE, "apex_ledger.json")
         self.S = json.load(open(self.path)) if os.path.exists(self.path) else dict(day=self.today, events=[], ai=[], shock=[])
         self.S.setdefault("shock", [])
-        self.L = json.load(open(self.ledger_path)) if os.path.exists(self.ledger_path) else {str(c): dict(cash=float(c), trades=[]) for c in CAPS}
+        self.L = json.load(open(self.ledger_path)) if os.path.exists(self.ledger_path) else {}
+        for k in [k for k in self.L if "|" not in k]:          # pre-mode ledgers (v1, 50% sizing) -> aggressive
+            self.L[f"aggressive|{k}"] = self.L.pop(k)
+        for m in core.MODES:                                   # one paper ledger per risk mode x account size
+            for c in CAPS:
+                self.L.setdefault(f"{m}|{c}", dict(cash=float(c), trades=[]))
         # v1 -> v2 hand-over: a v1 trade from today is the ride lane's first trade (same rule), so v2 manages its exit
         for led in self.L.values():
             for rec in led["trades"]:
@@ -266,8 +271,9 @@ class Apex:
         return [(k, s, q[s]) for k, s in zip(ks, syms) if s in q]
 
     # ------------------------------------------------------------------ execution
-    def tag(self, cap, lane, n):
-        return f"apex-{cap}-{self.ymd}-{lane}{n}"
+    def tag(self, key, lane, n):
+        mode, cap = key.split("|")
+        return f"apex-{mode[0]}{cap}-{self.ymd}-{lane}{n}"
 
     def on_enter(self, lane, S, t, spot, replay):
         side = t["side"]
@@ -284,27 +290,30 @@ class Apex:
         t["ref_in"] = atm[1]
         if replay and minute_index(now_et()) - t["i"] > 3:
             return                                  # stale signal after a restart: track it, don't chase it
-        w = core.dial(self.imp) * core.LANES[lane]["weight"]
         veto = self.ai_veto(side)
-        for cap, led in self.L.items():
+        for cap, led in self.L.items():                         # cap = "mode|account size"
+            mode = cap.split("|")[0]
+            w = core.dial(self.imp) * core.MODES[mode][lane]
             tg = self.tag(cap, lane, t["n"])
             if any(x["tag"] == tg for x in led["trades"]):
                 continue
+            if w == 0:
+                continue                                        # this mode doesn't trade this lane / sits out today
             open_cost = sum(x.get("cost", 0) for x in led["trades"] if x["day"] == self.today and not x.get("booked"))
-            budget = min(led["cash"] * FRAC * w, led["cash"] - open_cost)
+            budget = min(led["cash"] * w, led["cash"] - open_cost)
             pick = next(((k, s, ba) for k, s, ba in ch if (ba[1] + orders.EDGE) * 100 <= budget), None) if budget > 0 else None
             if not pick:
-                self.event(f"${cap}: {'dial is 0' if w == 0 else f'nothing affordable within ${budget:.0f}'} — not traded", kind="skip")
+                self.event(f"{cap}: nothing affordable within ${budget:.0f} — not traded", kind="skip")
                 continue
             k, sym, (bid, ask) = pick
             qty = max(1, int(budget // ((ask + orders.EDGE) * 100)))
-            rec = dict(tag=tg, cap=int(cap), day=self.today, lane=lane, n=t["n"], book=t["book"], side=side, strike=k, symbol=sym,
+            rec = dict(tag=tg, cap=int(cap.split("|")[1]), mode=mode, day=self.today, lane=lane, n=t["n"], book=t["book"], side=side, strike=k, symbol=sym,
                        qty=qty, bar=t["i"], spy_in=spot, quote_in=[bid, ask], cost=round((ask + orders.EDGE) * 100 * qty, 2),
                        t_in=now_et().strftime("%H:%M:%S"), ai_veto=veto, stop=ex.get("sl"), target=ex.get("tp"))
             if veto and os.environ.get("APEX_AI_VETO") == "1":
                 rec.update(status="vetoed", booked=True, pnl=0.0)
                 led["trades"].append(rec)
-                self.event(f"${cap}: vetoed by the news desk ({veto})", kind="veto")
+                self.event(f"{cap}: vetoed by the news desk ({veto})", kind="veto")
                 continue
             led["trades"].append(rec)
             if self.dry:
@@ -312,7 +321,7 @@ class Apex:
             else:
                 oid, st, _ = orders.submit(self.H, sym, qty, "buy", tg + "-b")
                 rec.update(buy_id=oid, status=st, buy_ts=time.time())
-            self.event(f"${cap}: BUY {qty}× {sym} @ ask {ask:.2f} → {rec['status']}", kind="order")
+            self.event(f"{cap}: BUY {qty}× {sym} @ ask {ask:.2f} → {rec['status']}", kind="order")
         self.sub_options()
 
     def on_exit(self, lane, S, t, spot, replay):
@@ -346,7 +355,7 @@ class Apex:
             return
         oid, st, _ = orders.submit(self.H, rec["symbol"], held, "sell", rec["tag"] + "-s")
         rec.update(sell_id=oid, sell_status=st, sell_ts=time.time(), sell_done=False)
-        self.event(f"${rec['cap']}: SELL {held}× {rec['symbol']} ({rec.get('why')}) → {st}", kind="order")
+        self.event(f"{rec.get('mode', '')}|{rec['cap']}: SELL {held}× {rec['symbol']} ({rec.get('why')}) → {st}", kind="order")
 
     def fill(self, rec):
         for leg, key in (("buy", "buy_id"), ("sell", "sell_id")):
@@ -393,7 +402,7 @@ class Apex:
                     rec["pct"] = round(100 * (rec["fill_out"] / rec["fill_in"] - 1), 1) if rec["fill_in"] else 0.0
                     led["cash"] += rec["pnl"]
                     rec["booked"] = True
-                    self.event(f"${cap}: closed {rec['symbol']} {rec['pnl']:+.2f} ({rec['pct']:+.1f}%) → ledger ${led['cash']:.2f}", kind="pnl")
+                    self.event(f"{cap}: closed {rec['symbol']} {rec['pnl']:+.2f} ({rec['pct']:+.1f}%) → ledger ${led['cash']:.2f}", kind="pnl")
         self.dirty = True
 
     # ------------------------------------------------------------------ tick guard

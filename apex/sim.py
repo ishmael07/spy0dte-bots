@@ -100,7 +100,8 @@ def pick(Q, side, spot, i, budget):
     return None
 
 
-def run(m1, days, capital, frac, acct_rule="none", sessions=None, live="data/live"):
+def run(m1, days, capital, frac=None, acct_rule="none", sessions=None, live="data/live", mode=core.PRIMARY):
+    fr = core.MODES[mode]
     H = history_days(live)
     A = Account(capital, acct_rule, sorted(sessions or days))
     out = []
@@ -142,8 +143,8 @@ def run(m1, days, capital, frac, acct_rule="none", sessions=None, live="data/liv
                             S.cancel(t)
                             continue
                         t["ref_in"] = ref[1]
-                        w = core.dial(imp) * core.LANES[lane]["weight"]
-                        budget = min(A.budget(d, frac) * w, A.buying_power(d) - open_cost) if A.allowed(d) else 0
+                        w = core.dial(imp) * fr[lane]
+                        budget = min(A.budget(d, w), A.buying_power(d) - open_cost) if A.allowed(d) and w > 0 else 0
                         got = pick(Q, t["side"], c, i, budget) if budget > 0 else None
                         t["fill"] = None
                         if got:

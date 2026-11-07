@@ -68,11 +68,12 @@ td.r, th.r { text-align: right; }
     <h1>Apex</h1>
     <nav class="tabs"><a href="index.html">Learning bots</a><a href="apex.html" aria-current="page">Apex</a></nav>
   </header>
+  <div class="row" style="margin:0"><div class="seg" id="modeSeg"><button data-mode="balanced">Balanced</button><button data-mode="survival">Survival</button><button data-mode="aggressive">Aggressive</button></div><span class="mut" id="modeNote"></span></div>
 
   <section class="hero">
     <div><span class="k">Right now</span><span class="state" id="state"></span><span class="s" id="upd"></span></div>
-    <div><span class="k">$500 account</span><span class="v" id="b500"></span><span class="s" id="d500"></span></div>
-    <div><span class="k">$100 account</span><span class="v" id="b100"></span><span class="s" id="d100"></span></div>
+    <div><span class="k">$500 paper account</span><span class="v" id="b500"></span><span class="s" id="d500"></span></div>
+    <div><span class="k">$100 paper account</span><span class="v" id="b100"></span><span class="s" id="d100"></span></div>
     <div><span class="k">Size today</span><span class="v" id="dial"></span><span class="s" id="imp"></span></div>
   </section>
 
@@ -90,7 +91,7 @@ td.r, th.r { text-align: right; }
   <section class="panel"><h2 id="newsH">News desk</h2><div id="brief"></div><ul class="log" id="news"></ul></section>
 
   <section class="panel">
-    <div class="row"><h2>Track record · recorded option prices since Oct 9</h2><div class="seg" id="capSeg2"><button data-cap="500">$500</button><button data-cap="100">$100</button></div></div>
+    <div class="row"><h2>Track record · this mode on recorded option prices since Oct 9</h2><div class="seg" id="capSeg2"><button data-cap="500">$500</button><button data-cap="100">$100</button></div></div>
     <div id="equity"></div>
     <div class="books" id="books" style="margin-top:14px"></div>
     <div class="tscroll" style="margin-top:14px"><table id="hist"></table></div>
@@ -104,7 +105,7 @@ td.r, th.r { text-align: right; }
       <div class="book"><b>Pullback scalp</b><span class="mut">On a trend day, buys the dip to the 20-minute average. Target 3 ATR, stop 2 ATR, 20 min.</span></div>
       <div class="book"><b>Failed-breakout fade</b><span class="mut">When a breakout fails and SPY crosses VWAP the other way, trades the reversal. 20 min.</span></div>
     </div>
-    <p class="note">Max 3 trades a day, done after 2 losers. Targets and stops act on the SPY tick. Size set at 9:33 by what the straddle costs: cheap options → full size, expensive → half or quarter, very expensive → sits out.</p>
+    <p class="note">Max 3 trades a day, done after 2 losers. Targets and stops act on the SPY tick. Size = the mode's share of the account × a dial set at 9:33 by what the straddle costs: cheap options → full, expensive → half or quarter, very expensive → sits out. All three modes trade side by side in the paper account.</p>
   </section>
 
   <section class="panel">
@@ -126,8 +127,10 @@ const esc = (x) => String(x ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<"
 const usd = (x) => (x < 0 ? "−$" : "$") + Math.abs(x).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const sgnUsd = (x) => (x >= 0 ? "+" : "−") + "$" + Math.abs(x).toFixed(2);
 const NAME = { orb: "Opening range", ride: "Trend ride", pull: "Pullback scalp", fade: "Failed-breakout fade", "orb→ride": "Opening range → ride" };
-let cap = 500, A = D.apex, spy = D.spy || [], chart, cand, marks, lines = [];
-try { cap = +(localStorage.getItem("apexCap") || 500); } catch {}
+let cap = 500, mode = D.primary || "balanced", A = D.apex, spy = D.spy || [], chart, cand, marks, lines = [];
+try { cap = +(localStorage.getItem("apexCap") || 500); mode = localStorage.getItem("apexMode") || mode; } catch {}
+const MODE_NOTE = { balanced: "Main mode · ride 15% of the account, scalps 5% · × size dial", survival: "Ride only, 10% of the account · × size dial", aggressive: "Ride 50%, scalps 10% · × size dial · biggest swings" };
+const tmode = (t) => t.mode || "aggressive";
 const etEpoch = (day, hms) => { if (!hms) return null; const [h, m, s] = hms.split(":").map(Number);
   const probe = new Date(day + "T12:00:00Z"); const et = new Date(probe.toLocaleString("en-US", { timeZone: "America/New_York" }));
   const diffH = Math.round((probe - et) / 3.6e6); return Date.UTC(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10), h + diffH, m, s || 0) / 1000; };
@@ -137,6 +140,11 @@ const baseOpts = () => ({ layout: { background: { color: "transparent" }, textCo
   localization: { timeFormatter: (t) => new Date(t * 1000).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }) } });
 
 function segs() {
+  for (const b of $("modeSeg").querySelectorAll("button")) {
+    b.setAttribute("aria-pressed", b.dataset.mode === mode);
+    b.onclick = () => { mode = b.dataset.mode; try { localStorage.setItem("apexMode", mode); } catch {} render(); renderHistory(); };
+  }
+  $("modeNote").textContent = MODE_NOTE[mode] || "";
   for (const id of ["capSeg", "capSeg2"]) for (const b of $(id).querySelectorAll("button")) {
     b.setAttribute("aria-pressed", +b.dataset.cap === cap);
     b.onclick = () => { cap = +b.dataset.cap; try { localStorage.setItem("apexCap", cap); } catch {} render(); renderHistory(); };
@@ -153,11 +161,12 @@ function render() {
   $("upd").textContent = a.updated ? "updated " + new Date(a.updated * 1000).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit", second: "2-digit" }) + " ET" : "";
   const led = D.ledger || {};
   for (const c of [500, 100]) {
-    const L = (a.ledger && a.ledger[c]) || led[c] || { cash: c };
+    const key = `${mode}|${c}`;
+    const L = (a.ledger && (a.ledger[key] || (mode === "aggressive" && a.ledger[c]))) || led[key] || { cash: c };
     $("b" + c).textContent = usd(L.cash);
-    const today = (a.trades || []).filter((t) => t.cap === c && t.booked).reduce((s, t) => s + (t.pnl || 0), 0);
+    const today = (a.trades || []).filter((t) => t.cap === c && tmode(t) === mode && t.booked).reduce((s, t) => s + (t.pnl || 0), 0);
     const tot = L.cash - c;
-    $("d" + c).innerHTML = `<span class="${tot >= 0 ? "up" : "dn"}">${sgnUsd(tot)}</span> since Nov 6 · today <span class="${today >= 0 ? "up" : "dn"}">${sgnUsd(today)}</span>`;
+    $("d" + c).innerHTML = `<span class="${tot >= 0 ? "up" : "dn"}">${sgnUsd(tot)}</span> live · today <span class="${today >= 0 ? "up" : "dn"}">${sgnUsd(today)}</span>`;
   }
   $("dial").textContent = a.dial == null ? "—" : a.dial === 0 ? "Sitting out" : a.dial + "×";
   $("imp").textContent = a.imp ? `9:33 straddle prices a ${a.imp.toFixed(2)}% move` : "set at 9:33";
@@ -175,7 +184,7 @@ function render() {
   pl(lv.ub, css("--up"), "call trigger"); pl(lv.lb, css("--down"), "put trigger"); pl(lv.vwap, css("--vwap"), "VWAP", 2);
   for (const p of pos) { pl(p.stop, css("--down"), "stop", 0); pl(p.target, css("--up"), "target", 0); }
   const day = a.day || D.day;
-  const mine = (a.trades || []).filter((t) => t.cap === cap);
+  const mine = (a.trades || []).filter((t) => t.cap === cap && tmode(t) === mode);
   const times = spy.map((b) => b[0]);
   const snap = (t) => times.length ? times.reduce((b, x) => (Math.abs(x - t) < Math.abs(b - t) ? x : b), times[0]) : t;
   const mk = [];
@@ -202,7 +211,7 @@ function render() {
 
 let eq, eqS;
 function renderHistory() {
-  const tr = (D.sim[cap] || []);
+  const tr = ((D.sim[mode] || {})[cap] || []);
   if (!eq) { eq = LightweightCharts.createChart($("equity"), Object.assign(baseOpts(), { timeScale: { borderColor: css("--line"), timeVisible: false } }));
     eqS = eq.addSeries(LightweightCharts.AreaSeries, { lineColor: css("--s1"), topColor: "rgba(57,135,229,.25)", bottomColor: "rgba(57,135,229,0)", lineWidth: 2 }); }
   let bal = cap; const pts = [{ time: tr.length ? tr[0].tIn - 3600 : 0, value: cap }];

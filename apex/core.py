@@ -62,7 +62,13 @@ def supertrend(h, l, c, n=10, k=3.0):
     return d
 
 
-LANES = {"A": dict(books=("ride",), max_trades=1, weight=1.0), "B": dict(books=("orb", "pull", "fade"), max_trades=2, weight=0.5)}
+LANES = {"A": dict(books=("ride",), max_trades=1), "B": dict(books=("orb", "pull", "fade"), max_trades=2)}
+
+# Risk modes: fraction of the account's equity per trade, by lane (x the 9:33 size dial). Chosen 2026-11-06 from
+# lab5 compounding tests (design / calm test / live month, $500): balanced $3,254 / $116 / $1,953;
+# survival $2,402 / $293 / $1,062; aggressive $7,121 / $0 / $9,081.
+MODES = {"balanced": {"A": 0.15, "B": 0.05}, "survival": {"A": 0.10, "B": 0.0}, "aggressive": {"A": 0.50, "B": 0.10}}
+PRIMARY = "balanced"
 
 
 def dial(imp_pct):
