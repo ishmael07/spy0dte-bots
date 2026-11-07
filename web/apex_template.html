@@ -115,6 +115,7 @@ td.r, th.r { text-align: right; }
       <div class="fact"><span class="mut">Untouched test · Jul 2025 – Oct 2026</span><span class="v dn">−5.1</span><span class="mut">full stakes · calm market, small size</span></div>
       <div class="fact"><span class="mut">Live month · Oct 9 – Nov 5</span><span class="v up">+12.6</span><span class="mut">full stakes · volatile market</span></div>
     </div>
+    <p class="note">Dealer-gamma map (flip level, call/put walls) is recorded every 15 minutes and shown on the chart. Rebuilt for 676 past days it did not predict trend vs chop, so it informs but doesn't trade until forward data says otherwise.</p>
     <p class="note">Strong when SPY trends, roughly flat to slightly negative when it's calm. Headline-reading AI scored 45–54% on direction over Sep–Nov 2026, so the news desk advises and is scored but doesn't trade yet.</p>
   </section>
 </div>
@@ -172,7 +173,9 @@ function render() {
   $("imp").textContent = a.imp ? `9:33 straddle prices a ${a.imp.toFixed(2)}% move` : "set at 9:33";
   const lv = a.levels || {};
   $("levels").innerHTML = [["SPY", a.spy ? (+a.spy).toFixed(2) : null], ["Call trigger", lv.ub], ["Put trigger", lv.lb], ["VWAP", lv.vwap],
-    ["Opening range", lv.orl ? `${lv.orl}–${lv.orh}` : null], ["5m / 15m trend", lv.st5 != null ? `${lv.st5 > 0 ? "▲" : "▼"} ${lv.st15 > 0 ? "▲" : "▼"}` : null]]
+    ["Opening range", lv.orl ? `${lv.orl}–${lv.orh}` : null], ["5m / 15m trend", lv.st5 != null ? `${lv.st5 > 0 ? "▲" : "▼"} ${lv.st15 > 0 ? "▲" : "▼"}` : null],
+    ["Dealer gamma", a.gex_now ? `${a.gex_now.regime}${a.gex_now.flip ? " · flip " + a.gex_now.flip : ""}` : null],
+    ["Call / put wall", a.gex_now ? `${a.gex_now.call_wall ?? "—"} / ${a.gex_now.put_wall ?? "—"}` : null]]
     .filter(([, v]) => v != null).map(([k, v]) => `<span>${k} <b>${v}</b></span>`).join("");
   // chart
   if (!chart) { chart = LightweightCharts.createChart($("chart"), baseOpts());
@@ -183,6 +186,8 @@ function render() {
   const pl = (price, color, title, style = 1) => price && lines.push(cand.createPriceLine({ price, color, lineWidth: 1, lineStyle: style, axisLabelVisible: true, title }));
   pl(lv.ub, css("--up"), "call trigger"); pl(lv.lb, css("--down"), "put trigger"); pl(lv.vwap, css("--vwap"), "VWAP", 2);
   for (const p of pos) { pl(p.stop, css("--down"), "stop", 0); pl(p.target, css("--up"), "target", 0); }
+  const gx = a.gex_now;
+  if (gx) { pl(gx.call_wall, css("--faint"), "call wall", 3); pl(gx.put_wall, css("--faint"), "put wall", 3); pl(gx.flip, css("--s4"), "gamma flip", 3); }
   const day = a.day || D.day;
   const mine = (a.trades || []).filter((t) => t.cap === cap && tmode(t) === mode);
   const times = spy.map((b) => b[0]);

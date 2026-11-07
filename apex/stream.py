@@ -34,6 +34,7 @@ sys.path.insert(0, ROOT)
 from alpaca import feed, orders  # noqa: E402
 from apex import core  # noqa: E402
 from apex.ai import Desk  # noqa: E402
+from apex import gex as gexmap  # noqa: E402
 
 ET = ZoneInfo("America/New_York")
 LIVE = os.path.join(ROOT, "alpaca", "runtime", "data", "live")
@@ -638,13 +639,35 @@ class Apex:
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, 60)
 
+    async def gamma_map(self):
+        """dealer-gamma map every 15 minutes from 9:34 — recorded and shown, not used by the rules (see apex/gex.py)"""
+        spot = self.tick or (self.lanes["A"].c[-1] if self.lanes and self.lanes["A"].c else None)
+        if not spot:
+            return
+        try:
+            if not getattr(self, "_oi", None):
+                self._oi = await asyncio.to_thread(gexmap.open_interest, self.H, self.today, spot)
+            mids = await asyncio.to_thread(gexmap.snapshot_mids, self.H, sorted(self._oi))
+            g = await asyncio.to_thread(gexmap.compute, self._oi, mids, spot)
+            if g:
+                self.S["gex"] = (self.S.get("gex", []) + [g])[-40:]
+                self.S["gex_now"] = g
+                self.event(f"gamma map: {g['regime']} (net ${g['net_bn']}B per 1%), flip {g['flip'] or '—'}, call wall {g['call_wall']}, put wall {g['put_wall']}", kind="gex")
+        except Exception as e:
+            self.event(f"gamma map error {e!r}"[:200])
+
     async def housekeeping(self, deadline):
         briefed = "brief" in self.S
+        last_gex = -1
         while time.time() < deadline:
             hm = now_et().hour * 100 + now_et().minute
             if not briefed and hm >= 920:
                 briefed = True
                 asyncio.create_task(self.brief())
+            mi = minute_index(now_et())
+            if 4 <= mi < 390 and (mi - 4) % 15 == 0 and mi != last_gex:
+                last_gex = mi
+                asyncio.create_task(self.gamma_map())
             if any(not t.get("booked") for t in self.today_trades()):
                 self.settle()
             for t in self.today_trades():
