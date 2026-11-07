@@ -217,8 +217,9 @@ class Apex:
             c = p = None
             try:
                 t0 = now_et().replace(hour=9, minute=33, second=0, microsecond=0).astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+                t1 = now_et().replace(hour=9, minute=40, second=0, microsecond=0).astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
                 r = requests.get(f"{DATA}/v1beta1/options/bars", headers=self.H, params=dict(symbols=",".join(syms), timeframe="1Min",
-                                 start=t0, limit=20), timeout=10)
+                                 start=t0, end=t1, limit=1000), timeout=10)
                 bars = (r.json().get("bars") or {}) if r.ok else {}
                 c = (bars.get(syms[0]) or [{}])[0].get("c")
                 p = (bars.get(syms[1]) or [{}])[0].get("c")
