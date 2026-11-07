@@ -126,10 +126,24 @@ def run(m1, days, capital, frac=None, acct_rule="none", sessions=None, live="dat
         imp = None
         open_cost = 0.0
         day_out = []
+        so = core.SCALE_OUT.get(mode)
         for i in range(390):
             if i not in bars:
                 continue
             o, h, l, c, v = bars[i]
+            # profit-taking on open fills: half at 2x entry (resting limit), then breakeven stop on the rest
+            for S in lanes.values():
+                t = S.pos
+                f = t.get("fill") if t else None
+                if not so or not f or f.get("closed"):
+                    continue
+                z = Q.at(t["side"], f["k"], i)
+                if not z:
+                    continue
+                if not f.get("half_q") and f["qty"] >= 2 and z[0] >= f["px"] * (1 + so[0]):
+                    f["half_q"], f["half_px"] = int(f["qty"] * so[1]), round(f["px"] * (1 + so[0]), 2)
+                elif f.get("half_q") and z[0] <= f["px"]:
+                    f["closed"], f["out"], f["why"], f["j"] = True, z[0], "BREAKEVEN", i
             if i == 3:
                 k = round(c)
                 a, b = Q.at("C", k, 3), Q.at("P", k, 3)
@@ -159,10 +173,16 @@ def run(m1, days, capital, frac=None, acct_rule="none", sessions=None, live="dat
                         if not f:
                             continue
                         ba = Q.at(t["side"], f["k"], i)
-                        px_out = ba[0] if ba else 0.0
+                        px_out = f["out"] if f.get("closed") else (ba[0] if ba else 0.0)
                         cost = f["px"] * 100 * f["qty"]
                         open_cost -= cost
-                        pnl = (px_out - f["px"]) * 100 * f["qty"]
+                        hq = f.get("half_q") or 0
+                        proceeds = hq * (f.get("half_px") or 0) + (f["qty"] - hq) * px_out
+                        pnl = (proceeds - f["px"] * f["qty"]) * 100
+                        if f.get("closed"):
+                            t = dict(t, why=f["why"], j=f["j"])
+                        if hq:
+                            px_out = proceeds / f["qty"]
                         A.book(d, cost, pnl)
                         ei = base + min(t["i"] + 1, len(rows) - 1)
                         xi = base + min(t["j"] + 1, len(rows) - 1)

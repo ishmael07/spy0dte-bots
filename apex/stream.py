@@ -347,15 +347,60 @@ class Apex:
             self.settle()
             return
         self.fill(rec)
-        held = rec.get("filled_qty") or 0
+        self.half_check(rec)
+        if rec.get("half_id") and not rec.get("half_done"):
+            orders._req(self.H, "DELETE", f"/v2/orders/{rec['half_id']}")
+            self.half_check(rec, final=True)
+        held = (rec.get("filled_qty") or 0) - (rec.get("half_qty") or 0)
+        if not held and rec.get("half_qty"):
+            rec.update(sell_status="filled", fill_out=rec["half_px"], sell_done=True, rest_qty=0)
+            self.settle()
+            return
         if not held:
             if rec.get("buy_id") and not rec.get("buy_done"):
                 orders._req(self.H, "DELETE", f"/v2/orders/{rec['buy_id']}")
             rec.update(sell_status="nothing filled", booked=True, pnl=0.0, pct=0.0)
             return
         oid, st, _ = orders.submit(self.H, rec["symbol"], held, "sell", rec["tag"] + "-s")
-        rec.update(sell_id=oid, sell_status=st, sell_ts=time.time(), sell_done=False)
+        rec.update(sell_id=oid, sell_status=st, sell_ts=time.time(), sell_done=False, rest_qty=held)
         self.event(f"{rec.get('mode', '')}|{rec['cap']}: SELL {held}× {rec['symbol']} ({rec.get('why')}) → {st}", kind="order")
+
+    def half_place(self, rec):
+        """after the entry fills: rest a limit sell for half the contracts at 2x the fill (balanced/survival)"""
+        so = core.SCALE_OUT.get(rec.get("mode"))
+        q = rec.get("filled_qty") or 0
+        if not so or self.dry or rec.get("half_id") or not rec.get("buy_done") or not rec.get("fill_in") or q < 2 or rec.get("sell_id"):
+            return
+        hq = int(q * so[1])
+        px = round(rec["fill_in"] * (1 + so[0]), 2)
+        code, j = orders._req(self.H, "POST", "/v2/orders", json=dict(symbol=rec["symbol"], qty=str(hq), side="sell", type="limit",
+                              limit_price=f"{px:.2f}", time_in_force="day", client_order_id=rec["tag"] + "-h"))
+        if code in (200, 201):
+            rec.update(half_id=j.get("id"), half_limit=px, half_want=hq)
+            self.event(f"{rec['mode']}|{rec['cap']}: resting take-profit — sell {hq}× at {px:.2f} (2× entry)", kind="order")
+
+    def half_check(self, rec, final=False):
+        if not rec.get("half_id") or rec.get("half_done"):
+            return
+        code, j = orders._req(self.H, "GET", f"/v2/orders/{rec['half_id']}")
+        if code != 200:
+            return
+        fq = int(float(j.get("filled_qty") or 0))
+        if fq and j.get("filled_avg_price"):
+            if not rec.get("half_qty"):
+                self.event(f"{rec['mode']}|{rec['cap']}: TOOK PROFIT on {fq}× {rec['symbol']} at {float(j['filled_avg_price']):.2f} — rest now on a breakeven stop", kind="pnl")
+            rec.update(half_qty=fq, half_px=float(j["filled_avg_price"]))
+        if j.get("status") in ("filled", "canceled", "expired", "rejected") or final:
+            rec["half_done"] = j.get("status") in ("filled", "canceled", "expired", "rejected")
+
+    def breakeven_check(self, rec):
+        """after taking half: if the option falls back to the entry price, sell the rest (this ledger only)"""
+        if not rec.get("half_qty") or rec.get("sell_id") or rec.get("booked"):
+            return
+        q = self.quotes.get(rec["symbol"])
+        if q and q[0] and q[0] <= rec["fill_in"]:
+            rec.update(t_out=now_et().strftime("%H:%M:%S"), why="BREAKEVEN after taking profit", spy_out=self.tick)
+            self.sell(rec)
 
     def fill(self, rec):
         for leg, key in (("buy", "buy_id"), ("sell", "sell_id")):
@@ -394,12 +439,14 @@ class Apex:
                         orders._req(self.H, "DELETE", f"/v2/orders/{rec['sell_id']}")
                         self.fill(rec)
                     if rec.get("sell_status") in ("canceled", "expired", "rejected") and (rec.get("filled_qty") or 0) and rec.get("fill_out") is None:
-                        oid, st, _ = orders.submit(self.H, rec["symbol"], rec["filled_qty"], "sell", rec["tag"] + f"-s{int(time.time()) % 10000}")
+                        oid, st, _ = orders.submit(self.H, rec["symbol"], rec.get("rest_qty") or rec["filled_qty"], "sell", rec["tag"] + f"-s{int(time.time()) % 10000}")
                         rec.update(sell_id=oid, sell_status=st, sell_ts=time.time(), sell_done=False)
                 if rec.get("fill_in") is not None and rec.get("fill_out") is not None:
                     q = rec.get("filled_qty") or rec["qty"]
-                    rec["pnl"] = round((rec["fill_out"] - rec["fill_in"]) * 100 * q, 2)
-                    rec["pct"] = round(100 * (rec["fill_out"] / rec["fill_in"] - 1), 1) if rec["fill_in"] else 0.0
+                    hq = rec.get("half_qty") or 0
+                    proceeds = hq * (rec.get("half_px") or 0) + (q - hq) * rec["fill_out"]
+                    rec["pnl"] = round((proceeds - q * rec["fill_in"]) * 100, 2)
+                    rec["pct"] = round(100 * (proceeds / (q * rec["fill_in"]) - 1), 1) if rec["fill_in"] else 0.0
                     led["cash"] += rec["pnl"]
                     rec["booked"] = True
                     self.event(f"{cap}: closed {rec['symbol']} {rec['pnl']:+.2f} ({rec['pct']:+.1f}%) → ledger ${led['cash']:.2f}", kind="pnl")
@@ -604,6 +651,10 @@ class Apex:
                 q = self.quotes.get(t.get("symbol"))
                 if not t.get("booked") and q:
                     t["mark"] = round((q[0] + q[1]) / 2, 2)
+                if not t.get("booked") and not self.dry and int(time.time()) % 5 == 0:
+                    self.half_place(t)
+                    self.half_check(t)
+                    self.breakeven_check(t)
             self.save()
             busy = (self.lanes and any(S.pos for S in self.lanes.values())) or any(not t.get("booked") for t in self.today_trades())
             if hm >= 1600 or (hm >= 1547 and not busy):

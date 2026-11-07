@@ -69,6 +69,10 @@ LANES = {"A": dict(books=("ride",), max_trades=1), "B": dict(books=("orb", "pull
 # survival $2,402 / $293 / $1,062; aggressive $7,121 / $0 / $9,081.
 MODES = {"balanced": {"A": 0.15, "B": 0.05}, "survival": {"A": 0.10, "B": 0.0}, "aggressive": {"A": 0.50, "B": 0.10}}
 PRIMARY = "balanced"
+# Profit-taking (lab5/scaleout.py): sell half when the option doubles, then a breakeven stop on the rest.
+# Balanced sizing: design +278% -> +180%, calm test -59% -> -36%, live month +171% -> +104% (smaller swings both ways).
+# Quicker targets (+20/30/50%) raised the green-trade rate to 46-57% but lost much more money in every period.
+SCALE_OUT = {"balanced": (1.0, 0.5), "survival": (1.0, 0.5), "aggressive": None}      # (gain, fraction sold)
 
 
 def dial(imp_pct):
