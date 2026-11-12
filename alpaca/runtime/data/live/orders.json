@@ -4091,5 +4091,17 @@
 "status": "missed",
 "note": "entry 6 min old when first seen"
 }
+},
+"sniper_ppp-500-261112-C762-4300": {
+"bot": "sniper_ppp",
+"cap": 500,
+"symbol": "SPY261112C00762000",
+"day": "2026-11-12",
+"sim_in": 1.36,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 6 min old when first seen"
+}
 }
 }
