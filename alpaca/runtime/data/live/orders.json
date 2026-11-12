@@ -4103,5 +4103,17 @@
 "status": "missed",
 "note": "entry 6 min old when first seen"
 }
+},
+"daily-500-261112-P759-4328": {
+"bot": "daily",
+"cap": 500,
+"symbol": "SPY261112P00759000",
+"day": "2026-11-12",
+"sim_in": 1.06,
+"qty": 13,
+"buy": {
+"status": "missed",
+"note": "entry 6 min old when first seen"
+}
 }
 }
