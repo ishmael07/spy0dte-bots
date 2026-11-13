@@ -4279,11 +4279,12 @@
 },
 "sell": {
 "id": "3f38e810-d0ad-44ae-89ce-b0c8d1ce7f40",
-"status": "new",
-"fill": null,
-"filled_qty": 0
+"status": "filled",
+"fill": 1.4,
+"filled_qty": 1
 },
-"sim_out": 2.11
+"sim_out": 2.11,
+"pnl": 0.0
 },
 "combined-500-261113-P744-10125": {
 "bot": "combined",
