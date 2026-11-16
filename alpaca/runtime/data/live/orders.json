@@ -4865,5 +4865,29 @@
 "status": "missed",
 "note": "entry 243 min old when first seen"
 }
+},
+"noise_plus-100-261116-P741-4328": {
+"bot": "noise_plus",
+"cap": 100,
+"symbol": "SPY261116P00741000",
+"day": "2026-11-16",
+"sim_in": 1.19,
+"qty": 4,
+"buy": {
+"status": "missed",
+"note": "entry 6 min old when first seen"
+}
+},
+"noise_plus-500-261116-P741-4328": {
+"bot": "noise_plus",
+"cap": 500,
+"symbol": "SPY261116P00741000",
+"day": "2026-11-16",
+"sim_in": 1.19,
+"qty": 6,
+"buy": {
+"status": "missed",
+"note": "entry 6 min old when first seen"
+}
 }
 }
