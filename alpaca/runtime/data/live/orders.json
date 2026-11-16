@@ -4392,7 +4392,15 @@
 "status": "filled",
 "fill": 1.35,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "13fbe5a7-cecb-4d22-88e9-a23b958feff6",
+"status": "filled",
+"fill": 1.78,
+"filled_qty": 1
+},
+"sim_out": 1.2,
+"pnl": 43.0
 },
 "combined-500-261116-P738-10434": {
 "bot": "combined",
@@ -4405,6 +4413,220 @@
 "id": "7b9bdf31-0efe-461a-b855-a30bc3b885e3",
 "status": "filled",
 "fill": 0.36,
+"filled_qty": 1
+}
+},
+"sniper-100-261116-P746-4277": {
+"bot": "sniper",
+"cap": 100,
+"symbol": "SPY261116P00746000",
+"day": "2026-11-16",
+"sim_in": 2.11,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper-500-261116-P748-4277": {
+"bot": "sniper",
+"cap": 500,
+"symbol": "SPY261116P00748000",
+"day": "2026-11-16",
+"sim_in": 2.98,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper_plus-500-261116-P744-4277": {
+"bot": "sniper_plus",
+"cap": 500,
+"symbol": "SPY261116P00744000",
+"day": "2026-11-16",
+"sim_in": 1.49,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper_pp-500-261116-P745-4277": {
+"bot": "sniper_pp",
+"cap": 500,
+"symbol": "SPY261116P00745000",
+"day": "2026-11-16",
+"sim_in": 1.83,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper_plus_scalp-100-261116-P737-4277": {
+"bot": "sniper_plus_scalp",
+"cap": 100,
+"symbol": "SPY261116P00737000",
+"day": "2026-11-16",
+"sim_in": 0.45,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper_plus_scalp-500-261116-P746-4277": {
+"bot": "sniper_plus_scalp",
+"cap": 500,
+"symbol": "SPY261116P00746000",
+"day": "2026-11-16",
+"sim_in": 2.11,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper_pp_scalp-500-261116-P746-4277": {
+"bot": "sniper_pp_scalp",
+"cap": 500,
+"symbol": "SPY261116P00746000",
+"day": "2026-11-16",
+"sim_in": 2.11,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper_ppp-500-261116-P743-4277": {
+"bot": "sniper_ppp",
+"cap": 500,
+"symbol": "SPY261116P00743000",
+"day": "2026-11-16",
+"sim_in": 1.28,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper4-500-261116-P747-4277": {
+"bot": "sniper4",
+"cap": 500,
+"symbol": "SPY261116P00747000",
+"day": "2026-11-16",
+"sim_in": 2.54,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"time-100-261116-P740-4277": {
+"bot": "time",
+"cap": 100,
+"symbol": "SPY261116P00740000",
+"day": "2026-11-16",
+"sim_in": 0.76,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"time-500-261116-P747-4277": {
+"bot": "time",
+"cap": 500,
+"symbol": "SPY261116P00747000",
+"day": "2026-11-16",
+"sim_in": 2.54,
+"qty": 2,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"combined-500-261116-P745-4277": {
+"bot": "combined",
+"cap": 500,
+"symbol": "SPY261116P00745000",
+"day": "2026-11-16",
+"sim_in": 1.83,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"daily-500-261116-P748-4277": {
+"bot": "daily",
+"cap": 500,
+"symbol": "SPY261116P00748000",
+"day": "2026-11-16",
+"sim_in": 2.98,
+"qty": 8,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniped1-500-261116-P745-10440": {
+"bot": "sniped1",
+"cap": 500,
+"symbol": "SPY261116P00745000",
+"day": "2026-11-16",
+"sim_in": 1.55,
+"qty": 1,
+"buy": {
+"id": "34cf7d8e-9499-40d0-86ce-1472185befe0",
+"status": "filled",
+"fill": 1.18,
+"filled_qty": 1
+},
+"sell": {
+"id": "d3e9763a-7f3f-4ba9-9059-64d31b272ecb",
+"status": "filled",
+"fill": 1.18,
+"filled_qty": 1
+},
+"sim_out": 1.44,
+"pnl": 0.0
+},
+"combined-500-261116-P737-10440": {
+"bot": "combined",
+"cap": 500,
+"symbol": "SPY261116P00737000",
+"day": "2026-11-16",
+"sim_in": 0.32,
+"qty": 1,
+"buy": {
+"id": "a6f8b27e-9bb2-4a2d-850b-1d8a1d8bb609",
+"status": "filled",
+"fill": 0.25,
+"filled_qty": 1
+},
+"sell": {
+"id": "41461357-0c13-4f5a-9c8b-4d27e8587f00",
+"status": "filled",
+"fill": 0.24,
+"filled_qty": 1
+},
+"sim_out": 0.4,
+"pnl": -1.0
+},
+"sniped1-500-261116-P744-10446": {
+"bot": "sniped1",
+"cap": 500,
+"symbol": "SPY261116P00744000",
+"day": "2026-11-16",
+"sim_in": 1.26,
+"qty": 1,
+"buy": {
+"id": "e414eacd-b2b1-4de0-8860-9939c164c966",
+"status": "filled",
+"fill": 0.97,
 "filled_qty": 1
 }
 }
