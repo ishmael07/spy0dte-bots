@@ -4379,5 +4379,33 @@
 "status": "missed",
 "note": "entry 8 min old when first seen"
 }
+},
+"sniped1-500-261116-P745-10434": {
+"bot": "sniped1",
+"cap": 500,
+"symbol": "SPY261116P00745000",
+"day": "2026-11-16",
+"sim_in": 1.83,
+"qty": 1,
+"buy": {
+"id": "a913b6f2-ab8c-41cf-9495-3edee48ca2f6",
+"status": "filled",
+"fill": 1.35,
+"filled_qty": 1
+}
+},
+"combined-500-261116-P738-10434": {
+"bot": "combined",
+"cap": 500,
+"symbol": "SPY261116P00738000",
+"day": "2026-11-16",
+"sim_in": 0.49,
+"qty": 1,
+"buy": {
+"id": "7b9bdf31-0efe-461a-b855-a30bc3b885e3",
+"status": "filled",
+"fill": 0.36,
+"filled_qty": 1
+}
 }
 }
