@@ -4414,6 +4414,10 @@
 "status": "filled",
 "fill": 0.36,
 "filled_qty": 1
+},
+"sell": {
+"status": "flattened",
+"note": "closed by 3:50 pm safety net"
 }
 },
 "sniper-100-261116-P746-4277": {
