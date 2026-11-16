@@ -4889,5 +4889,113 @@
 "status": "missed",
 "note": "entry 6 min old when first seen"
 }
+},
+"sniper-100-261116-P745-4277": {
+"bot": "sniper",
+"cap": 100,
+"symbol": "SPY261116P00745000",
+"day": "2026-11-16",
+"sim_in": 1.84,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 323 min old when first seen"
+}
+},
+"sniper_plus-100-261116-P734-4277": {
+"bot": "sniper_plus",
+"cap": 100,
+"symbol": "SPY261116P00734000",
+"day": "2026-11-16",
+"sim_in": 0.25,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 323 min old when first seen"
+}
+},
+"sniped1-100-261116-P733-10440": {
+"bot": "sniped1",
+"cap": 100,
+"symbol": "SPY261116P00733000",
+"day": "2026-11-16",
+"sim_in": 0.18,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 317 min old when first seen"
+}
+},
+"sniped1-100-261116-P732-10446": {
+"bot": "sniped1",
+"cap": 100,
+"symbol": "SPY261116P00732000",
+"day": "2026-11-16",
+"sim_in": 0.14,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 311 min old when first seen"
+}
+},
+"sniped1-500-261116-P744-10440": {
+"bot": "sniped1",
+"cap": 500,
+"symbol": "SPY261116P00744000",
+"day": "2026-11-16",
+"sim_in": 1.46,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 317 min old when first seen"
+}
+},
+"combined-500-261116-P732-10434": {
+"bot": "combined",
+"cap": 500,
+"symbol": "SPY261116P00732000",
+"day": "2026-11-16",
+"sim_in": 0.18,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 323 min old when first seen"
+}
+},
+"combined-500-261116-P735-10440": {
+"bot": "combined",
+"cap": 500,
+"symbol": "SPY261116P00735000",
+"day": "2026-11-16",
+"sim_in": 0.25,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 317 min old when first seen"
+}
+},
+"combined-500-261116-P736-10446": {
+"bot": "combined",
+"cap": 500,
+"symbol": "SPY261116P00736000",
+"day": "2026-11-16",
+"sim_in": 0.25,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 311 min old when first seen"
+}
+},
+"noise-100-261116-P742-4312": {
+"bot": "noise",
+"cap": 100,
+"symbol": "SPY261116P00742000",
+"day": "2026-11-16",
+"sim_in": 0.85,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 148 min old when first seen"
+}
 }
 }
