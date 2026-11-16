@@ -4853,5 +4853,17 @@
 "status": "missed",
 "note": "entry 6 min old when first seen"
 }
+},
+"combined-100-261116-P728-4277": {
+"bot": "combined",
+"cap": 100,
+"symbol": "SPY261116P00728000",
+"day": "2026-11-16",
+"sim_in": 0.08,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 243 min old when first seen"
+}
 }
 }
