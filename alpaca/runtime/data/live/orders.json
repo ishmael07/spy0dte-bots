@@ -5145,5 +5145,17 @@
 "status": "missed",
 "note": "entry 7 min old when first seen"
 }
+},
+"sniped1-500-261117-P735-10831": {
+"bot": "sniped1",
+"cap": 500,
+"symbol": "SPY261117P00735000",
+"day": "2026-11-17",
+"sim_in": 1.58,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 6 min old when first seen"
+}
 }
 }
