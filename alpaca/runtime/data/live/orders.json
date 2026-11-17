@@ -5253,5 +5253,29 @@
 "status": "missed",
 "note": "entry 32 min old when first seen"
 }
+},
+"noise_plus-100-261117-P734-4290": {
+"bot": "noise_plus",
+"cap": 100,
+"symbol": "SPY261117P00734000",
+"day": "2026-11-17",
+"sim_in": 2.58,
+"qty": 2,
+"buy": {
+"status": "missed",
+"note": "entry 9 min old when first seen"
+}
+},
+"noise_plus-500-261117-P734-4290": {
+"bot": "noise_plus",
+"cap": 500,
+"symbol": "SPY261117P00734000",
+"day": "2026-11-17",
+"sim_in": 2.58,
+"qty": 3,
+"buy": {
+"status": "missed",
+"note": "entry 9 min old when first seen"
+}
 }
 }
