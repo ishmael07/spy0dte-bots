@@ -5739,5 +5739,29 @@
 "status": "missed",
 "note": "entry 7 min old when first seen"
 }
+},
+"sniper_plus_scalp-100-261118-P717-4291": {
+"bot": "sniper_plus_scalp",
+"cap": 100,
+"symbol": "SPY261118P00717000",
+"day": "2026-11-18",
+"sim_in": 0.32,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 37 min old when first seen"
+}
+},
+"sniper_pp_scalp-100-261118-P717-4291": {
+"bot": "sniper_pp_scalp",
+"cap": 100,
+"symbol": "SPY261118P00717000",
+"day": "2026-11-18",
+"sim_in": 0.32,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 37 min old when first seen"
+}
 }
 }
