@@ -5607,5 +5607,137 @@
 },
 "sim_out": 0.98,
 "pnl": 7.0
+},
+"sniper-100-261118-P725-4291": {
+"bot": "sniper",
+"cap": 100,
+"symbol": "SPY261118P00725000",
+"day": "2026-11-18",
+"sim_in": 1.26,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper-500-261118-P729-4291": {
+"bot": "sniper",
+"cap": 500,
+"symbol": "SPY261118P00729000",
+"day": "2026-11-18",
+"sim_in": 2.69,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper_plus-500-261118-P723-4291": {
+"bot": "sniper_plus",
+"cap": 500,
+"symbol": "SPY261118P00723000",
+"day": "2026-11-18",
+"sim_in": 0.84,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper_pp-500-261118-P725-4291": {
+"bot": "sniper_pp",
+"cap": 500,
+"symbol": "SPY261118P00725000",
+"day": "2026-11-18",
+"sim_in": 1.26,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper_plus_scalp-500-261118-P727-4291": {
+"bot": "sniper_plus_scalp",
+"cap": 500,
+"symbol": "SPY261118P00727000",
+"day": "2026-11-18",
+"sim_in": 1.86,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper_pp_scalp-500-261118-P727-4291": {
+"bot": "sniper_pp_scalp",
+"cap": 500,
+"symbol": "SPY261118P00727000",
+"day": "2026-11-18",
+"sim_in": 1.86,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper_ppp-500-261118-P720-4291": {
+"bot": "sniper_ppp",
+"cap": 500,
+"symbol": "SPY261118P00720000",
+"day": "2026-11-18",
+"sim_in": 0.48,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper4-500-261118-P725-4291": {
+"bot": "sniper4",
+"cap": 500,
+"symbol": "SPY261118P00725000",
+"day": "2026-11-18",
+"sim_in": 1.26,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"time-500-261118-P728-4291": {
+"bot": "time",
+"cap": 500,
+"symbol": "SPY261118P00728000",
+"day": "2026-11-18",
+"sim_in": 2.23,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"combined-500-261118-P720-4291": {
+"bot": "combined",
+"cap": 500,
+"symbol": "SPY261118P00720000",
+"day": "2026-11-18",
+"sim_in": 0.48,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"daily-500-261118-P729-4291": {
+"bot": "daily",
+"cap": 500,
+"symbol": "SPY261118P00729000",
+"day": "2026-11-18",
+"sim_in": 2.69,
+"qty": 6,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
 }
 }
