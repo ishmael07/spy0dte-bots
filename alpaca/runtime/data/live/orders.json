@@ -5563,5 +5563,27 @@
 },
 "sim_out": 1.26,
 "pnl": -2.0
+},
+"sniped1-500-261118-P728-11246": {
+"bot": "sniped1",
+"cap": 500,
+"symbol": "SPY261118P00728000",
+"day": "2026-11-18",
+"sim_in": 1.64,
+"qty": 1,
+"buy": {
+"id": "55039bc5-22dc-4f5d-b4a4-2063abe4b4e1",
+"status": "filled",
+"fill": 1.26,
+"filled_qty": 1
+},
+"sell": {
+"id": "63012708-5e46-4b79-9af8-bc89e850d57d",
+"status": "filled",
+"fill": 1.08,
+"filled_qty": 1
+},
+"sim_out": 1.2,
+"pnl": -18.0
 }
 }
