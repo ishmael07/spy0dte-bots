@@ -5944,7 +5944,15 @@
 "status": "filled",
 "fill": 0.78,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "533aef8e-00f8-4193-93a4-a2cc1f6fdc88",
+"status": "filled",
+"fill": 0.58,
+"filled_qty": 1
+},
+"sim_out": 1.3,
+"pnl": -20.0
 },
 "sniper-500-261120-P709-4277": {
 "bot": "sniper",
@@ -6004,6 +6012,18 @@
 "buy": {
 "status": "missed",
 "note": "entry 10 min old when first seen"
+}
+},
+"sniped1-500-261120-P703-12005": {
+"bot": "sniped1",
+"cap": 500,
+"symbol": "SPY261120P00703000",
+"day": "2026-11-20",
+"sim_in": 1.23,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 6 min old when first seen"
 }
 }
 }
