@@ -6191,5 +6191,29 @@
 "status": "missed",
 "note": "entry 170 min old when first seen"
 }
+},
+"sniper_ppp-500-261120-P685-4277": {
+"bot": "sniper_ppp",
+"cap": 500,
+"symbol": "SPY261120P00685000",
+"day": "2026-11-20",
+"sim_in": 0.36,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 294 min old when first seen"
+}
+},
+"sniper_ppp-500-261120-P685-4286": {
+"bot": "sniper_ppp",
+"cap": 500,
+"symbol": "SPY261120P00685000",
+"day": "2026-11-20",
+"sim_in": 0.32,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 249 min old when first seen"
+}
 }
 }
