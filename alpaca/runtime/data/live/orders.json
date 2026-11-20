@@ -6025,5 +6025,31 @@
 "status": "missed",
 "note": "entry 6 min old when first seen"
 }
+},
+"sniped1-500-261120-P706-12031": {
+"bot": "sniped1",
+"cap": 500,
+"symbol": "SPY261120P00706000",
+"day": "2026-11-20",
+"sim_in": 1.14,
+"qty": 1,
+"buy": {
+"id": "5f4b75ac-9d86-4a66-bfde-6f3b573f55e2",
+"status": "filled",
+"fill": 1.74,
+"filled_qty": 1
+}
+},
+"sniper4-500-261120-P701-4286": {
+"bot": "sniper4",
+"cap": 500,
+"symbol": "SPY261120P00701000",
+"day": "2026-11-20",
+"sim_in": 0.93,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 9 min old when first seen"
+}
 }
 }
