@@ -6038,7 +6038,15 @@
 "status": "filled",
 "fill": 1.74,
 "filled_qty": 1
-}
+},
+"sell": {
+"id": "9df6e71e-b04e-4577-b1e1-922d87cddf4a",
+"status": "filled",
+"fill": 2.66,
+"filled_qty": 1
+},
+"sim_out": 3.31,
+"pnl": 92.0
 },
 "sniper4-500-261120-P701-4286": {
 "bot": "sniper4",
