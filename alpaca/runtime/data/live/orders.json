@@ -6383,5 +6383,17 @@
 "status": "missed",
 "note": "entry 326 min old when first seen"
 }
+},
+"daily-500-261123-C721-4282": {
+"bot": "daily",
+"cap": 500,
+"symbol": "SPY261123C00721000",
+"day": "2026-11-23",
+"sim_in": 4.38,
+"qty": 2,
+"buy": {
+"status": "missed",
+"note": "entry 8 min old when first seen"
+}
 }
 }
