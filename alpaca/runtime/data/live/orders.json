@@ -6467,5 +6467,26 @@
 "status": "missed",
 "note": "entry 6 min old when first seen"
 }
+},
+"sniped1-500-261125-P693-13224": {
+"bot": "sniped1",
+"cap": 500,
+"symbol": "SPY261125P00693000",
+"day": "2026-11-25",
+"sim_in": 1.32,
+"qty": 1,
+"buy": {
+"id": "221c6ad0-1859-46ea-8fa9-907058120911",
+"status": "filled",
+"fill": 1.26,
+"filled_qty": 1
+},
+"sell": {
+"id": "60392092-ed38-4d1f-afdb-6a46688d573b",
+"status": "new",
+"fill": null,
+"filled_qty": 0
+},
+"sim_out": 1.11
 }
 }
