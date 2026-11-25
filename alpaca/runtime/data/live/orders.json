@@ -6511,5 +6511,113 @@
 },
 "sim_out": 0.92,
 "pnl": -52.0
+},
+"sniper-100-261125-P691-4300": {
+"bot": "sniper",
+"cap": 100,
+"symbol": "SPY261125P00691000",
+"day": "2026-11-25",
+"sim_in": 0.52,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper-500-261125-P698-4300": {
+"bot": "sniper",
+"cap": 500,
+"symbol": "SPY261125P00698000",
+"day": "2026-11-25",
+"sim_in": 2.24,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper_plus-500-261125-P689-4300": {
+"bot": "sniper_plus",
+"cap": 500,
+"symbol": "SPY261125P00689000",
+"day": "2026-11-25",
+"sim_in": 0.37,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper_pp-500-261125-P692-4300": {
+"bot": "sniper_pp",
+"cap": 500,
+"symbol": "SPY261125P00692000",
+"day": "2026-11-25",
+"sim_in": 0.64,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper_plus_scalp-500-261125-P695-4300": {
+"bot": "sniper_plus_scalp",
+"cap": 500,
+"symbol": "SPY261125P00695000",
+"day": "2026-11-25",
+"sim_in": 1.26,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper_pp_scalp-500-261125-P695-4300": {
+"bot": "sniper_pp_scalp",
+"cap": 500,
+"symbol": "SPY261125P00695000",
+"day": "2026-11-25",
+"sim_in": 1.26,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper_ppp-500-261125-P690-4300": {
+"bot": "sniper_ppp",
+"cap": 500,
+"symbol": "SPY261125P00690000",
+"day": "2026-11-25",
+"sim_in": 0.42,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"sniper4-500-261125-P691-4300": {
+"bot": "sniper4",
+"cap": 500,
+"symbol": "SPY261125P00691000",
+"day": "2026-11-25",
+"sim_in": 0.52,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
+},
+"time-500-261125-P693-4300": {
+"bot": "time",
+"cap": 500,
+"symbol": "SPY261125P00693000",
+"day": "2026-11-25",
+"sim_in": 0.83,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 7 min old when first seen"
+}
 }
 }
