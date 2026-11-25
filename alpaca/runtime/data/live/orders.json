@@ -6619,5 +6619,17 @@
 "status": "missed",
 "note": "entry 7 min old when first seen"
 }
+},
+"sniper_plus-500-261125-P690-4300": {
+"bot": "sniper_plus",
+"cap": 500,
+"symbol": "SPY261125P00690000",
+"day": "2026-11-25",
+"sim_in": 0.41,
+"qty": 1,
+"buy": {
+"status": "missed",
+"note": "entry 210 min old when first seen"
+}
 }
 }
