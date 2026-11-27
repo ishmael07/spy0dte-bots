@@ -1,8 +1,8 @@
 {
  "shared": {
-  "equity": 100941.61,
-  "last_equity": 101013.71,
-  "cash": 100941.61,
+  "equity": 100941.5,
+  "last_equity": 100941.5,
+  "cash": 100941.5,
   "daytrades": 0,
   "pdt": false
  }
